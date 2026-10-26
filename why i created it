@@ -1,0 +1,3 @@
+I'm a draftsman. I built ArtPose 3D because I kept running into the same problem: when one part of the body moves, I couldn't reliably predict how the rest follows — where the elbow ends up, whether the weight shift keeps the figure balanced, which joint limits get hit. Reference posers exist, but they either hide the mechanics or can't tell you whether a pose is physically holdable.
+
+So I built the mechanics myself: a real IK solver, anatomical range-of-motion per joint, ground contact as a constraint, and a center-of-mass stability test. The goal isn't a pretty figure — it's understanding why a pose works, so my drawings stay coherent. Every technical choice in the engine answers a question I had as a artist.
