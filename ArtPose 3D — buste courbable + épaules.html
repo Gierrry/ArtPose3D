@@ -1,0 +1,3200 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#fbf7ef">
+<title>ArtPose 3D</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#e9e1cf; --bg:#fbf7ef; --panel:#f3ecdd;
+  --ink:#2b2a25; --ink-soft:#6f6a5c; --line:#d8cdb2;
+  --rose:#d98a93; --rose-deep:#c06c78; --rose-soft:#f1c9ce;
+  --sage:#8fae86; --sage-deep:#6f9166;
+  --navy:#33415c; --gold:#a67a2c; --danger:#b85d62;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;}
+body{background:var(--paper);color:var(--ink);font-family:"Work Sans",system-ui,sans-serif;overscroll-behavior:none;}
+button,input{font:inherit;}
+button{border:0;}
+
+.app{
+  width:100%; max-width:440px; height:100dvh;
+  margin:auto; background:var(--bg);
+  display:flex; flex-direction:column; overflow:hidden; position:relative;
+}
+.screen{
+  flex:1; min-height:0; overflow-y:auto; overflow-x:hidden;
+  padding:18px 16px calc(78px + env(safe-area-inset-bottom));
+  overscroll-behavior:contain; scrollbar-width:none;
+}
+.screen::-webkit-scrollbar{display:none;}
+[hidden]{display:none!important;}
+
+#screen-studio{
+  padding:0; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.studio-header{
+  flex:none; padding:18px 16px 0;
+  background:var(--bg); position:relative; z-index:5;
+}
+.studio-body{
+  flex:1; min-height:0; overflow-y:auto; overflow-x:hidden;
+  padding:0 16px calc(78px + env(safe-area-inset-bottom));
+  overscroll-behavior:contain; scrollbar-width:none;
+}
+.studio-body::-webkit-scrollbar{display:none;}
+
+.brand{text-align:center;padding:10px 0 4px;}
+.brand h1{margin:0;font-family:Fraunces,serif;font-size:44px;font-weight:600;letter-spacing:-1.5px;}
+.brand p{margin:4px 0 0;color:var(--ink-soft);font-size:13px;}
+.home-figure{height:calc(100dvh - 260px);min-height:350px;max-height:520px;display:flex;align-items:center;justify-content:center;}
+.figure{width:100%;height:100%;display:block;overflow:visible;}
+
+.back-row{
+  height:44px; display:grid;
+  grid-template-columns:42px 1fr 42px;
+  align-items:center; margin-bottom:4px;
+}
+.back-row h2{text-align:center;margin:0;font-family:Fraunces,serif;font-size:25px;font-weight:600;}
+.icon-btn{width:40px;height:40px;border-radius:13px;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:22px;user-select:none;touch-action:manipulation;}
+.icon-btn:active{transform:scale(.94);}
+
+.tabs{
+  display:flex; gap:5px;
+  background:var(--panel); padding:4px;
+  border-radius:14px; margin:5px 0 10px;
+}
+.tab{flex:1;text-align:center;padding:10px 4px;border-radius:10px;font-size:12px;font-weight:600;color:var(--ink-soft);}
+.tab.active{background:var(--bg);color:var(--ink);box-shadow:0 2px 7px rgba(0,0,0,.07);}
+
+.studio-figure{
+  height:210px; min-height:210px;
+  position:relative;
+  background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.75),var(--bg) 68%);
+  border-radius:20px; overflow:hidden;
+  touch-action:none;
+}
+.studio-figure svg{width:100%;height:100%;display:block;touch-action:none;}
+.draw-layer{position:absolute;inset:0;width:100%;height:100%;touch-action:none;z-index:5;}
+
+.scene{
+  height:210px; border-radius:20px;
+  overflow:hidden; position:relative;
+  background:#efe6d3; touch-action:none;
+}
+.scene svg{width:100%;height:100%;display:block;touch-action:none;}
+
+.hint{margin:8px 2px 12px;font-size:11px;line-height:1.45;color:var(--ink-soft);text-align:center;}
+.tool-row{display:flex;gap:7px;margin-bottom:8px;padding-top:10px;}
+.tool-row button{flex:1;padding:10px 8px;border-radius:12px;background:var(--panel);color:var(--ink-soft);font-size:12px;font-weight:600;}
+.tool-row button.active{background:var(--ink);color:white;}
+.lib-section{margin-top:8px;}
+.lib-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;font-weight:600;}
+.lib-add{background:none;color:var(--rose-deep);font-size:11px;font-weight:700;padding:6px;}
+.lib-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:5px;scrollbar-width:none;touch-action:pan-x;}
+.lib-scroll::-webkit-scrollbar{display:none;}
+.lib-card{position:relative;flex:0 0 88px;height:108px;background:var(--panel);border:1.5px solid transparent;border-radius:13px;overflow:hidden;padding:4px;}
+.lib-card.active{border-color:var(--rose);background:#f8e7e8;}
+.lib-card svg{width:100%;height:80px;}
+.lib-name{font-size:9px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lib-del{position:absolute;right:3px;top:3px;width:19px;height:19px;border-radius:50%;background:rgba(43,42,37,.7);color:white;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line);font-size:12px;}
+.switch{width:44px;height:25px;border-radius:20px;background:#d3cbbd;padding:3px;transition:.18s;}
+.switch .dot{width:19px;height:19px;border-radius:50%;background:white;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.15);}
+.switch.on{background:var(--sage);}
+.switch.on .dot{transform:translateX(19px);}
+.sliders-toggle{display:flex;justify-content:space-between;padding:14px 2px;font-size:12px;font-weight:600;border-bottom:1px solid var(--line);}
+.sliders-toggle .chev{transition:.2s;}
+.sliders-toggle.open .chev{transform:rotate(90deg);}
+.slider-row{padding:9px 0;}
+.label-row{display:flex;align-items:center;justify-content:space-between;}
+.slider-row label,.light-slider-wrap label{font-size:11px;color:var(--ink-soft);}
+input[type=range]{width:100%;height:30px;margin:2px 0 0;accent-color:var(--rose-deep);}
+.lock-btn{background:none;font-size:14px;padding:3px 5px;color:var(--ink-soft);}
+.lock-btn.locked{color:var(--rose-deep);}
+.row-buttons{display:flex;gap:8px;margin-top:12px;}
+.btn{flex:1;min-height:44px;border-radius:13px;background:var(--ink);color:white;font-size:12px;font-weight:700;touch-action:manipulation;}
+.btn:active{transform:scale(.98);}
+.btn.secondary{background:var(--panel);color:var(--ink);}
+.light-slider-wrap{padding:10px 0;}
+
+.bg-swatches{display:flex;gap:7px;margin:0 0 9px;padding-top:10px;}
+.bg-swatch{width:38px;height:30px;border-radius:10px;border:2px solid transparent;}
+.bg-swatch.active{border-color:var(--rose-deep);}
+.speed-row{display:flex;gap:6px;margin-top:8px;}
+.speed-btn{flex:1;min-height:36px;border-radius:11px;background:var(--panel);font-size:11px;font-weight:600;color:var(--ink-soft);}
+.speed-btn.active{background:var(--ink);color:white;}
+.play-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.play-btn{width:45px;height:45px;border-radius:50%;background:var(--rose);color:white;font-size:17px;flex:none;}
+.kf-row{display:flex;gap:7px;height:78px;margin-top:9px;overflow-x:auto;scrollbar-width:none;}
+.kf-row::-webkit-scrollbar{display:none;}
+.kf-thumb{position:relative;flex:0 0 62px;height:72px;background:var(--panel);border:2px solid transparent;border-radius:11px;overflow:hidden;}
+.kf-thumb.active{border-color:var(--rose);}
+.kf-thumb .del{position:absolute;right:2px;top:2px;width:17px;height:17px;background:rgba(43,42,37,.65);color:white;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:12px;}
+.kf-add{flex:0 0 62px;height:72px;border-radius:11px;border:1.5px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:24px;}
+.gallery-empty{height:300px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:13px;text-align:center;}
+.gallery-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;}
+.gallery-item{position:relative;aspect-ratio:1/1;border-radius:15px;overflow:hidden;background:var(--panel);}
+.gallery-item svg{width:100%;height:100%;}
+.gallery-item .del{position:absolute;right:6px;top:6px;width:24px;height:24px;border-radius:50%;background:rgba(43,42,37,.68);color:white;display:flex;align-items:center;justify-content:center;font-size:17px;z-index:10;}
+.bottom-nav{position:absolute;z-index:100;left:0;right:0;bottom:0;min-height:66px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:rgba(251,247,239,.96);border-top:1px solid var(--line);display:flex;gap:5px;backdrop-filter:blur(12px);}
+.nav-btn{flex:1;background:none;color:var(--ink-soft);border-radius:13px;font-size:10px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;touch-action:manipulation;}
+.nav-btn.active{background:var(--panel);color:var(--ink);}
+.nav-btn .ic{font-size:21px;line-height:21px;}
+.toast{position:absolute;z-index:300;left:50%;bottom:82px;transform:translate(-50%,15px);background:rgba(43,42,37,.92);color:white;padding:9px 14px;border-radius:20px;font-size:11px;opacity:0;pointer-events:none;transition:.2s;white-space:nowrap;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+button,.icon-btn,.tab,.lib-card,.bg-swatch,.kf-thumb,.kf-add,.switch{touch-action:manipulation;user-select:none;}
+
+/* styles SVG 3D */
+.bone{fill:none;stroke:#2b2a25;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;}
+.bone.thin{stroke-width:5;}
+.bone.clavicle{stroke:#6f6a5c;stroke-width:6;}
+.joint{fill:var(--bg);stroke:#2b2a25;stroke-width:2.3;}
+.joint.center{fill:#c9bda1;}
+.handle{stroke:#fff;stroke-width:2;}
+.handle.position{fill:var(--rose);}
+.handle.pole{fill:var(--gold);}
+.handle.twist{fill:#8f7ba8;}
+.handle.selected{fill:#26c6da;stroke:#fff;stroke-width:4;}
+.handle{opacity:0;pointer-events:none;}
+svg.show-handles .handle{opacity:1;pointer-events:all;}
+.grid{stroke:#c9bda1;stroke-width:1;opacity:.55;}
+.ground{stroke:#a89a78;stroke-width:2;opacity:.9;}
+.support{stroke:#b85d62;stroke-width:2;stroke-dasharray:6 6;fill:none;}
+.com{fill:#b85d62;stroke:#fff;stroke-width:2;}
+.twistmark{stroke:#8f7ba8;stroke-width:3;stroke-linecap:round;}
+.axis{stroke-width:1.5;opacity:.7;}
+.axisX{stroke:#ef5350;}
+.axisY{stroke:#55d7c6;}
+.axisZ{stroke:#e5a23a;}
+.label{fill:var(--ink-soft);font-size:11px;pointer-events:none;}
+
+@media(max-height:680px){
+  .studio-figure,.scene{height:180px;min-height:180px;}
+  .brand h1{font-size:38px;}
+  .home-figure{min-height:280px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ACCUEIL -->
+<div class="screen" id="screen-accueil">
+  <div class="brand">
+    <h1>ArtPose</h1>
+    <p>Explorez et dessinez le corps humain</p>
+  </div>
+  <div class="home-figure">
+    <svg class="figure" id="svg-home" viewBox="0 0 400 460" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+</div>
+
+<!-- STUDIO -->
+<div class="screen" id="screen-studio" hidden>
+  <div class="studio-header">
+    <div class="back-row">
+      <div class="icon-btn" data-goto="accueil">←</div>
+      <h2 id="studio-title">Pose</h2>
+      <div class="icon-btn" id="studio-help">?</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="pose">Pose</div>
+      <div class="tab" data-tab="lumiere">Lumière</div>
+      <div class="tab" data-tab="scene">Scène</div>
+    </div>
+
+    <div class="studio-figure" id="studio-figure-wrap">
+      <svg class="figure" id="svg-studio" viewBox="0 0 400 460" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <div class="scene" id="scene" hidden>
+      <svg id="svg-scene" viewBox="0 0 400 460" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+
+  <div class="studio-body">
+
+    <div id="panel-pose">
+      <div class="tool-row">
+        <button class="active" data-posemode="articulations">Articulations</button>
+        <button data-posemode="dessiner">Dessiner</button>
+      </div>
+
+      <p class="hint" id="pose-hint">
+        Tirez une main ou un pied. Le coude ou le genou suit naturellement.
+      </p>
+
+      <div class="lib-section">
+        <div class="lib-header">
+          <span>Bibliothèque de poses</span>
+          <button class="lib-add" id="btn-lib-add">+ Ajouter</button>
+        </div>
+        <div class="lib-scroll" id="lib-scroll"></div>
+      </div>
+
+      <div class="row-buttons">
+        <button class="btn secondary" id="btn-undo">↶</button>
+        <button class="btn secondary" id="btn-redo">↷</button>
+        <button class="btn" id="btn-save-pose">Enregistrer</button>
+      </div>
+
+      <div class="row-buttons">
+        <button class="btn secondary" id="btn-reset-pose">Réinitialiser</button>
+        <button class="btn secondary" id="btn-clear-drawing" hidden>Effacer dessin</button>
+      </div>
+    </div>
+
+    <div id="panel-lumiere" hidden>
+      <p class="hint">Réglez la lumière pour étudier les ombres (rendu 3D).</p>
+      <div class="light-slider-wrap">
+        <div class="label-row"><label>Azimut de la lumière</label></div>
+        <input type="range" id="light-angle" min="-90" max="90" value="-40">
+      </div>
+      <div class="row-buttons">
+        <button class="btn" id="btn-save-ombre">Enregistrer l'étude</button>
+      </div>
+    </div>
+
+    <div id="panel-scene" hidden>
+      <div class="bg-swatches" id="bg-swatches"></div>
+      <p class="hint">1 doigt : poser / déplacer · 2 doigts : zoom et rotation</p>
+
+      <div class="light-slider-wrap">
+        <div class="label-row"><label>Taille de la figure</label></div>
+        <input type="range" id="scene-scale" min="60" max="160" value="100">
+      </div>
+
+      <div class="speed-row" id="cycle-row">
+        <button class="speed-btn active" data-cycle="walk">Marche</button>
+        <button class="speed-btn" data-cycle="run">Course</button>
+      </div>
+
+      <div class="speed-row" id="speed-row"></div>
+
+      <div class="play-row">
+        <button class="play-btn" id="btn-play">▶</button>
+        <input type="range" id="timeline" min="0" max="100" value="0">
+      </div>
+
+      <div class="kf-row" id="kf-row">
+        <button class="kf-add" id="kf-add">+</button>
+      </div>
+
+      <div class="row-buttons">
+        <button class="btn secondary" id="btn-reset-scene">Réinitialiser</button>
+        <button class="btn" id="btn-save-scene">Enregistrer</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- GALERIE -->
+<div class="screen" id="screen-galerie" hidden>
+  <div class="back-row">
+    <div class="icon-btn" data-goto="accueil">←</div>
+    <h2>Galerie</h2>
+    <div style="width:40px"></div>
+  </div>
+  <div id="gallery-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="bottom-nav">
+  <button class="nav-btn active" data-nav="accueil"><span class="ic">⌂</span>Accueil</button>
+  <button class="nav-btn" data-nav="studio:pose"><span class="ic">◑</span>Studio</button>
+  <button class="nav-btn" data-nav="galerie"><span class="ic">▦</span>Galerie</button>
+</div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   UTILS GÉNÉRAUX
+============================================================ */
+
+const NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+const $$=(sel,root=document)=>[...root.querySelectorAll(sel)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
+function isValidVec3(v){
+  return v&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&Number.isFinite(v.z);
+}
+function validateSegmentLength(a,b,expected,tolerance=0.5){
+  const actual=dist(a,b);
+  return Math.abs(actual-expected)<=tolerance;
+}
+
+/* Chantier Balance, étape B3-bis — géométrie POLYGON.
+
+   convexHull2D(points) : enveloppe convexe 2D par balayage monotone
+   (algorithme d'Andrew, standard, O(n log n)). Travaille sur des points
+   génériques {x,z} (pas des Vec3 complets) pour rester un outil
+   géométrique pur, indépendant de Puppet.
+
+   Gère nativement les cas dégénérés : des points dupliqués ou
+   colinéaires ne produisent PAS un hull artificiellement gonflé — ils
+   sont éliminés par construction, le hull résultant peut donc avoir
+   moins de sommets que l'entrée (2 si tout est aligné, 1 si tout est
+   confondu, 0 si aucun point). C'est exactement le comportement voulu
+   par la décision : décrire la géométrie réellement produite. */
+function convexHull2D(points){
+  const uniq=[];
+  for(const p of points){
+    if(!uniq.some(q=>Math.abs(q.x-p.x)<1e-9&&Math.abs(q.z-p.z)<1e-9)){
+      uniq.push(p);
+    }
+  }
+  if(uniq.length<=2)return uniq.slice();
+
+  const pts=uniq.slice().sort((a,b)=>a.x-b.x||a.z-b.z);
+  const cross=(o,a,b)=>(a.x-o.x)*(b.z-o.z)-(a.z-o.z)*(b.x-o.x);
+
+  const lower=[];
+  for(const p of pts){
+    while(lower.length>=2&&cross(lower[lower.length-2],lower[lower.length-1],p)<=0){
+      lower.pop();
+    }
+    lower.push(p);
+  }
+  const upper=[];
+  for(let i=pts.length-1;i>=0;i--){
+    const p=pts[i];
+    while(upper.length>=2&&cross(upper[upper.length-2],upper[upper.length-1],p)<=0){
+      upper.pop();
+    }
+    upper.push(p);
+  }
+  upper.pop();lower.pop();
+  const hull=lower.concat(upper);
+
+  if(hull.length===0&&pts.length>=2){
+    return[pts[0],pts[pts.length-1]];
+  }
+  return hull;
+}
+
+/* Aire signée d'un polygone 2D (formule du lacet), valeur absolue
+   retournée. Garde géométrique : un hull à 3+ sommets mais d'aire
+   quasi nulle ne doit pas être traité comme un vrai polygone. */
+function polygonArea2D(points){
+  if(points.length<3)return 0;
+  let area=0;
+  for(let i=0;i<points.length;i++){
+    const a=points[i],b=points[(i+1)%points.length];
+    area+=a.x*b.z-b.x*a.z;
+  }
+  return Math.abs(area)/2;
+}
+
+/* Chantier Balance, étape B4 — test COM ∈ POLYGON.
+
+   pointInConvexPolygon2D(p, hull, epsilon) : teste si p appartient au
+   polygone CONVEXE hull (incluant son bord, à epsilon près).
+
+   Spécialisé pour un hull convexe — pas un point-in-polygon générique
+   par ray-casting — précisément parce que hull provient toujours de
+   convexHull2D() dans ce fichier : la convexité est une garantie
+   structurelle, pas une hypothèse à vérifier ici. Le test se réduit
+   donc à vérifier que p est du même côté (ou exactement sur) chaque
+   arête consécutive du hull, via le signe du produit vectoriel 2D.
+   Fonctionne quel que soit le sens de parcours (horaire/antihoraire)
+   du hull, en comparant chaque signe à celui de la première arête non
+   dégénérée plutôt qu'en supposant un sens fixe. */
+function pointInConvexPolygon2D(p,hull,epsilon){
+  if(epsilon===undefined)epsilon=0;
+  const n=hull.length;
+  if(n<3)return false;
+
+  let refSign=0;
+  for(let i=0;i<n;i++){
+    const a=hull[i],b=hull[(i+1)%n];
+    const cross=(b.x-a.x)*(p.z-a.z)-(b.z-a.z)*(p.x-a.x);
+    if(Math.abs(cross)<=epsilon)continue; /* sur l'arête (ou quasi) : ne contredit aucun côté */
+    const sign=cross>0?1:-1;
+    if(refSign===0){
+      refSign=sign;
+    }else if(sign!==refSign){
+      return false;
+    }
+  }
+  return true;
+}
+
+const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
+const load=(k,fb)=>{try{const v=localStorage.getItem(k);return v===null?fb:JSON.parse(v);}catch(e){return fb;}};
+
+/* ============================================================
+   MOTEUR 3D — VEC3
+============================================================ */
+
+class Vec3{
+  constructor(x=0,y=0,z=0){this.x=+x;this.y=+y;this.z=+z;}
+  clone(){return new Vec3(this.x,this.y,this.z);}
+  add(v){return new Vec3(this.x+v.x,this.y+v.y,this.z+v.z);}
+  sub(v){return new Vec3(this.x-v.x,this.y-v.y,this.z-v.z);}
+  mul(s){return new Vec3(this.x*s,this.y*s,this.z*s);}
+  len(){return Math.hypot(this.x,this.y,this.z);}
+  normalize(){const l=this.len();return l<1e-9?new Vec3():this.mul(1/l);}
+  static dot(a,b){return a.x*b.x+a.y*b.y+a.z*b.z;}
+  static cross(a,b){return new Vec3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);}
+}
+
+function safeNorm(v,fb){
+  const n=v.normalize();
+  return n.len()<1e-8?fb.clone():n;
+}
+
+/* ============================================================
+   ROTATIONS
+============================================================ */
+
+function rotateAroundAxis(v,axis,angle){
+  const a=axis.normalize();
+  const c=Math.cos(angle),s=Math.sin(angle);
+  return v.mul(c).add(Vec3.cross(a,v).mul(s)).add(a.mul(Vec3.dot(a,v)*(1-c)));
+}
+
+function coneClamp(dir,rest,maxAngle){
+  const d=safeNorm(dir,rest);
+  const r=safeNorm(rest,new Vec3(0,1,0));
+  const cosA=clamp(Vec3.dot(d,r),-1,1);
+  const angle=Math.acos(cosA);
+  if(angle<=maxAngle)return d;
+  let axis=Vec3.cross(r,d);
+  if(axis.len()<1e-6)axis=Vec3.cross(r,new Vec3(1,0,0));
+  if(axis.len()<1e-6)axis=Vec3.cross(r,new Vec3(0,0,1));
+  return rotateAroundAxis(r,axis.normalize(),maxAngle);
+}
+
+function excludeCone(dir,forbidden,minAngle){
+  const d=safeNorm(dir,forbidden);
+  const fdir=safeNorm(forbidden,new Vec3(0,1,0));
+  const cosA=clamp(Vec3.dot(d,fdir),-1,1);
+  const angle=Math.acos(cosA);
+  if(angle>=minAngle)return d;
+  let axis=Vec3.cross(fdir,d);
+  if(axis.len()<1e-6)axis=Vec3.cross(fdir,new Vec3(1,0,0));
+  if(axis.len()<1e-6)axis=Vec3.cross(fdir,new Vec3(0,0,1));
+  return rotateAroundAxis(fdir,axis.normalize(),minAngle);
+}
+
+function alignToCorrection(vec,fromDir,toDir){
+  const f=safeNorm(fromDir,new Vec3(0,1,0));
+  const t=safeNorm(toDir,new Vec3(0,1,0));
+  const cosA=clamp(Vec3.dot(f,t),-1,1);
+  const angle=Math.acos(cosA);
+  if(angle<1e-4)return vec.clone();
+  let axis=Vec3.cross(f,t);
+  if(axis.len()<1e-6)axis=Vec3.cross(f,new Vec3(1,0,0));
+  if(axis.len()<1e-6)axis=Vec3.cross(f,new Vec3(0,0,1));
+  return rotateAroundAxis(vec,axis.normalize(),angle);
+}
+
+/* ============================================================
+   ROM
+============================================================ */
+
+const ROM={
+  elbow:{min:Math.PI-Math.PI*(150/180),max:Math.PI-Math.PI*(5/180)},
+  knee:{min:Math.PI-Math.PI*(150/180),max:Math.PI-Math.PI*(3/180)},
+  shoulderCone:2.35,
+  shoulderShrug:0.5,
+  torsoFlexion:85*Math.PI/180,
+  torsoExtension:25*Math.PI/180,
+  torsoLateral:35*Math.PI/180,
+  neckCone:45*Math.PI/180,
+  hipCone:1.75,
+  shoulderBack:0.75,
+  hipBack:1.20,
+  elbowBendDeviation:0.42,
+  kneeBendDeviation:0.32,
+  ankleForwardCone:1.05,
+  forearmTwist:85*Math.PI/180
+};
+
+/* Poids relatifs utilisés pour approximer le centre de masse (COM).
+   Ce ne sont PAS des masses anthropométriques calibrées : ce sont les
+   valeurs déjà en usage (chantier Balance, étape B1 — rendre le COM
+   explicite sans changer son comportement). Un joint compte deux fois
+   (une fois par côté) quand il existe en L/R : elbow, wrist, knee, ankle. */
+const COM_WEIGHTS={
+  pelvis:14,
+  chest:24,
+  head:7,
+  elbow:3,
+  wrist:2,
+  knee:8,
+  ankle:5
+};
+
+/* Tolérance de contact au sol (chantier Balance, étape B2 — Support Region).
+   Calibrée empiriquement, pas choisie arbitrairement : sur des dizaines de
+   poses variées, le bruit flottant résiduel quand le contact réussit
+   réellement reste sous ~3e-14 ; le plus petit écart mesuré quand le
+   contact échoue structurellement (cible hors de portée géométrique) est
+   ~0.48. Il n'existe aucune valeur intermédiaire observée entre ces deux
+   régimes. 1e-6 laisse une marge de sécurité d'environ 8 ordres de grandeur
+   au-dessus du bruit et 5 ordres de grandeur en dessous du plus petit échec
+   réel, et reste cohérente avec la tolérance déjà utilisée dans
+   getGroundCorrection(). */
+const CONTACT_EPSILON=1e-6;
+
+/* Tolérance géométrique dans le plan du sol pour le test de stabilité
+   (chantier Balance, étape B3 — balanceState). Distincte de
+   CONTACT_EPSILON par concept, même si numériquement identique
+   actuellement : CONTACT_EPSILON répond à « ce point touche-t-il le
+   sol ? » (tolérance verticale), BALANCE_POINT_EPSILON répond à « le COM
+   projeté est-il géométriquement sur ce point/segment de support ? »
+   (tolérance dans le plan x,z). Volontairement stricte : le modèle
+   actuel ne possède aucune largeur d'empreinte de pied réelle, donc on
+   n'invente aucune tolérance anatomique (L.foot est une longueur
+   longitudinale, pas un rayon de support — l'utiliser serait un choix
+   arbitraire déguisé en donnée physique). */
+const BALANCE_POINT_EPSILON=1e-6;
+
+/* ============================================================
+   JOINT 3D
+============================================================ */
+
+class Joint{
+  constructor(name,position){
+    this.name=name;
+    this.position=position.clone();
+    this.rotation={x:0,y:0,z:0};
+    this.local={x:new Vec3(1,0,0),y:new Vec3(0,1,0),z:new Vec3(0,0,1)};
+    this.limits={x:[-Math.PI,Math.PI],y:[-Math.PI,Math.PI],z:[-Math.PI,Math.PI]};
+  }
+  setLimits(x,y,z){this.limits.x=x;this.limits.y=y;this.limits.z=z;}
+  clampRotation(){
+    this.rotation.x=clamp(this.rotation.x,this.limits.x[0],this.limits.x[1]);
+    this.rotation.y=clamp(this.rotation.y,this.limits.y[0],this.limits.y[1]);
+    this.rotation.z=clamp(this.rotation.z,this.limits.z[0],this.limits.z[1]);
+  }
+  rebuildLocalFrame(){
+    let x=new Vec3(1,0,0),y=new Vec3(0,1,0),z=new Vec3(0,0,1);
+    x=rotateAroundAxis(x,new Vec3(1,0,0),this.rotation.x);
+    y=rotateAroundAxis(y,new Vec3(1,0,0),this.rotation.x);
+    z=rotateAroundAxis(z,new Vec3(1,0,0),this.rotation.x);
+    x=rotateAroundAxis(x,new Vec3(0,1,0),this.rotation.y);
+    y=rotateAroundAxis(y,new Vec3(0,1,0),this.rotation.y);
+    z=rotateAroundAxis(z,new Vec3(0,1,0),this.rotation.y);
+    x=rotateAroundAxis(x,new Vec3(0,0,1),this.rotation.z);
+    y=rotateAroundAxis(y,new Vec3(0,0,1),this.rotation.z);
+    z=rotateAroundAxis(z,new Vec3(0,0,1),this.rotation.z);
+    this.local.x=safeNorm(x,new Vec3(1,0,0));
+    this.local.y=safeNorm(y,new Vec3(0,1,0));
+    this.local.z=safeNorm(z,new Vec3(0,0,1));
+  }
+}
+
+/* ============================================================
+   PUPPET — moteur biomécanique
+============================================================ */
+
+class Puppet{
+  constructor(){
+    this.L={
+      pelvisChest:105,neck:22,head:38,
+      shoulderWidth:70,hipWidth:52,clavicle:34,
+      upperArm:64,forearm:61,hand:18,
+      thigh:88,shin:86,foot:48
+    };
+
+    this.T={
+      pelvis:new Vec3(0,45,0),
+      torso:new Vec3(0,-70,0),
+      torsoFlex:0,
+      torsoLateral:0,
+      headTarget:null,
+      handL:new Vec3(-115,-55,0),
+      handR:new Vec3(115,-55,0),
+      elbowL:new Vec3(-76,-55,-35),
+      elbowR:new Vec3(76,-55,-35),
+      kneeL:new Vec3(-34,125,25),
+      kneeR:new Vec3(34,125,25),
+      ankleL:new Vec3(-32,211,0),
+      ankleR:new Vec3(32,211,0),
+      toesL:new Vec3(-32,220,35),
+      toesR:new Vec3(32,220,35),
+      shoulderPivotL:0,
+      shoulderPivotR:0
+    };
+
+    this.J={};
+    this.selected=null;
+
+    this.bend={
+      elbowL:new Vec3(-1,0,-1),elbowR:new Vec3(1,0,-1),
+      kneeL:new Vec3(-1,0,1),kneeR:new Vec3(1,0,1),
+      spine:new Vec3(0,0,-1)
+    };
+
+    this.twist={forearmL:0,forearmR:0};
+    this.grounded={L:true,R:true};
+    this.balance=new Vec3();
+    this.groundY=230;
+
+    this.joints={};
+    this.createJointModel();
+    this.solve();
+  }
+
+  createJointModel(){
+    const names=["pelvis","spineMid","chest","clavicleL","clavicleR","shoulderL","shoulderR",
+      "elbowL","elbowR","wristL","wristR","hipL","hipR","kneeL","kneeR","ankleL","ankleR"];
+    for(const n of names)this.joints[n]=new Joint(n,new Vec3());
+
+    for(const s of ["L","R"]){
+      this.joints["shoulder"+s].setLimits(
+        [-Math.PI*.85,Math.PI*.85],[-Math.PI*.65,Math.PI*.65],[-Math.PI*.8,Math.PI*.8]
+      );
+      this.joints["elbow"+s].setLimits([0,0],[-.08,.08],[-.08,.08]);
+      this.joints["wrist"+s].setLimits([-.55,.55],[-.45,.45],[-.7,.7]);
+    }
+  }
+
+  frame(spineDirOverride){
+    const spine=safeNorm(spineDirOverride||this.J.chest.sub(this.J.pelvis),new Vec3(0,-1,0));
+    let right=Vec3.cross(new Vec3(0,0,1),spine);
+    if(right.len()<1e-6)right=new Vec3(1,0,0);
+    right=right.normalize();
+    const forward=safeNorm(Vec3.cross(spine,right),new Vec3(0,0,1));
+    return{spine,right,forward,anatomicalForward:forward.mul(-1)};
+  }
+
+  twoBone(root,target,pole,a,b,memory,minAngle,maxAngle,refBend,maxDeviation){
+    if(minAngle===undefined)minAngle=.08;
+    if(maxAngle===undefined)maxAngle=Math.PI-.08;
+
+    /* --- garde géométrique dure (anti-désarticulation) ---
+       Quelle que soit la ROM demandée, la distance résolue root->target
+       ne peut JAMAIS dépasser a+b (bras tendu) ni descendre sous |a-b|
+       (segments repliés l'un sur l'autre). C'est une contrainte physique,
+       pas une contrainte de confort articulaire (ROM) : elle est appliquée
+       en premier et la ROM ne peut que restreindre davantage, jamais l'élargir. */
+    const minReach=Math.abs(a-b);
+    const maxReach=a+b;
+
+    /* borne ROM (confort articulaire), dérivée de l'angle min/max du coude/genou */
+    const dMin=clamp(
+      Math.sqrt(Math.max(0,a*a+b*b-2*a*b*Math.cos(minAngle))),
+      minReach,maxReach
+    );
+    const dMax=clamp(
+      Math.sqrt(Math.max(0,a*a+b*b-2*a*b*Math.cos(maxAngle))),
+      minReach,maxReach
+    );
+
+    const rawDist=target.sub(root).len();
+    /* la cible demandée (rawDist) peut être hors de portée : on ne déplace
+       jamais réellement la cible utilisateur, seule cette distance interne
+       "solvedTarget" est clampée pour le calcul du triangle. */
+    const solvedTarget=clamp(rawDist,dMin,dMax);
+    const d=solvedTarget;
+
+    const raw=target.sub(root);
+    const dir=safeNorm(raw,new Vec3(1,0,0));
+
+    let p=pole.sub(root);
+    p=p.sub(dir.mul(Vec3.dot(p,dir)));
+    if(p.len()<1e-6){p=memory.sub(root);p=p.sub(dir.mul(Vec3.dot(p,dir)));}
+    if(p.len()<1e-6)p=Vec3.cross(dir,new Vec3(0,0,1));
+    if(p.len()<1e-6)p=Vec3.cross(dir,new Vec3(1,0,0));
+
+    let bend=p.normalize();
+
+    if(refBend){
+      const refPerp=safeNorm(refBend.sub(dir.mul(Vec3.dot(refBend,dir))),bend);
+      const dev=maxDeviation===undefined?.35:maxDeviation;
+      bend=coneClamp(bend,refPerp,dev);
+      if(Vec3.dot(bend,refPerp)<0)bend=refPerp.clone();
+    }
+
+    /* loi des cosinus : cosAngle clampé à [-1,1] avant acos() pour éviter
+       tout NaN dû aux erreurs d'arrondi flottant (ex: 1.0000000002) */
+    let cosAngle=(a*a+d*d-b*b)/(2*a*d);
+    cosAngle=clamp(cosAngle,-1,1);
+    const along=a*cosAngle;
+    const side=Math.sqrt(Math.max(0,a*a-along*along));
+    const mid=root.add(dir.mul(along)).add(bend.mul(side));
+    const end=root.add(dir.mul(d));
+
+    return{mid,end,bend,rawDist,solvedTarget,reachable:rawDist<=maxReach+1e-6&&rawDist>=minReach-1e-6};
+  }
+
+
+  solve(){
+    this.J.pelvis=this.T.pelvis.add(this.balance);
+
+    /* ---- COLONNE EN 2 SEGMENTS (pelvis -> spineMid -> chest) ----
+       Le torse pivote réellement (flexion/extension + inclinaison latérale)
+       autour du point spineMid, au lieu de simplement translater un point.
+       spineBend.z pilote la flexion/extension (avant/arrière),
+       spineBend.x pilote l'inclinaison latérale (gauche/droite). */
+    const straightTop=this.T.pelvis.add(this.T.torso);
+    const totalLen=this.L.pelvisChest;
+    const lowerLen=totalLen*0.5;
+    const upperLen=totalLen*0.5;
+
+    const straightDir=safeNorm(straightTop.sub(this.J.pelvis),new Vec3(0,-1,0));
+    this.J.spineMid=this.J.pelvis.add(straightDir.mul(lowerLen));
+
+    /* repère du bassin (fixe, non affecté par la courbure) */
+    const fLower=this.frame(straightDir);
+
+    /* angles de torse, bornés selon les amplitudes anatomiques demandées */
+    const flexion=clamp(this.T.torsoFlex||0,-ROM.torsoExtension,ROM.torsoFlexion);
+    const lateral=clamp(this.T.torsoLateral||0,-ROM.torsoLateral,ROM.torsoLateral);
+
+    /* flexion/extension : rotation autour de l'axe latéral (right) du bassin */
+    let upperDir=rotateAroundAxis(straightDir,fLower.right,flexion);
+    /* inclinaison latérale : rotation autour de l'axe avant/arrière (forward) du bassin */
+    upperDir=rotateAroundAxis(upperDir,fLower.forward,lateral);
+    upperDir=safeNorm(upperDir,straightDir);
+
+    this.J.chest=this.J.spineMid.add(upperDir.mul(upperLen));
+
+    /* frame du bas du corps : basé sur l'axe DROIT (non courbé) du bassin,
+       pour que la courbure du buste n'affecte jamais hanches/jambes */
+    const f=fLower;
+    /* frame du haut du corps : basé sur l'axe réellement courbé de la colonne,
+       pour que tête/épaules/bras suivent la courbure du dos */
+    const fu=this.frame(upperDir);
+
+    const restArm=safeNorm(upperDir.mul(-1).add(fu.anatomicalForward.mul(.2)),new Vec3(0,1,0));
+    const restLeg=safeNorm(straightDir.mul(-1).add(f.forward.mul(.08)),new Vec3(0,1,0));
+    const backward=f.forward;
+    const backwardUpper=fu.forward;
+
+    const refBendElbowL=safeNorm(fu.right.mul(-1).add(fu.anatomicalForward.mul(.6)),fu.anatomicalForward);
+    const refBendElbowR=safeNorm(fu.right.mul(1).add(fu.anatomicalForward.mul(.6)),fu.anatomicalForward);
+    const refBendKneeL=safeNorm(f.forward.add(f.right.mul(-.15)),f.forward);
+    const refBendKneeR=safeNorm(f.forward.add(f.right.mul(.15)),f.forward);
+
+    const neckUp=safeNorm(this.J.chest.sub(this.J.spineMid),upperDir);
+    this.J.neck=this.J.chest.add(neckUp.mul(this.L.neck));
+
+    /* HEAD — cible monde bornée par un cône cervical (Option C, décision figée).
+       Contrairement à l'ancienne formule (neck + neckUp*L.head + headOffset),
+       qui permettait à un offset additif de casser la longueur du segment,
+       la tête reste TOUJOURS à distance exacte L.head du cou : seule la
+       DIRECTION varie, bornée par ROM.neckCone autour de l'axe nominal du
+       corps (neckUp). Une cible hors du cône est acceptée comme demande,
+       mais la direction résultante est clampée — la cible peut échouer,
+       le segment ne s'allonge jamais pour l'atteindre. */
+    let headDir=neckUp;
+    if(this.T.headTarget){
+      const rawHeadDir=this.T.headTarget.sub(this.J.neck);
+      if(rawHeadDir.len()>1e-6){
+        headDir=coneClamp(rawHeadDir,neckUp,ROM.neckCone);
+      }
+    }
+    this.J.head=this.J.neck.add(headDir.mul(this.L.head));
+
+    const clavicleInfluenceL=this.computeClavicle("L",fu);
+    const clavicleInfluenceR=this.computeClavicle("R",fu);
+
+    this.J.clavicleL=this.J.chest.add(fu.right.mul(-this.L.clavicle*.35)).add(clavicleInfluenceL);
+    this.J.clavicleR=this.J.chest.add(fu.right.mul(this.L.clavicle*.35)).add(clavicleInfluenceR);
+
+    /* pivot d'épaule : haussement réel de l'épaule (rotation autour d'un axe
+       avant-arrière du corps, donc mouvement vertical haut/bas), amplitude limitée
+       à un haussement d'épaule plausible plutôt qu'une rotation complète */
+    const shoulderHingeAxis=fu.forward;
+    const baseShoulderL=fu.right.mul(-this.L.shoulderWidth/2);
+    const baseShoulderR=fu.right.mul(this.L.shoulderWidth/2);
+    const liftAngleL=clamp(this.T.shoulderPivotL||0,-ROM.shoulderShrug,ROM.shoulderShrug);
+    const liftAngleR=clamp(this.T.shoulderPivotR||0,-ROM.shoulderShrug,ROM.shoulderShrug);
+    /* angle positif = épaule qui monte, quel que soit le côté */
+    const pivotedShoulderL=rotateAroundAxis(baseShoulderL,shoulderHingeAxis,liftAngleL);
+    const pivotedShoulderR=rotateAroundAxis(baseShoulderR,shoulderHingeAxis,-liftAngleR);
+
+    this.J.shoulderL=this.J.chest.add(pivotedShoulderL).add(clavicleInfluenceL);
+    this.J.shoulderR=this.J.chest.add(pivotedShoulderR).add(clavicleInfluenceR);
+
+    /* BRAS G */
+    const rawHandL=this.T.handL.sub(this.J.shoulderL);
+    const rawDirL=safeNorm(rawHandL,new Vec3(-1,0,0));
+    let dirHandL=coneClamp(rawHandL,restArm,ROM.shoulderCone);
+    dirHandL=excludeCone(dirHandL,backwardUpper,ROM.shoulderBack);
+    const clampedHandL=this.J.shoulderL.add(dirHandL.mul(rawHandL.len()));
+
+    const rawPoleVecL=this.T.elbowL.sub(this.J.shoulderL);
+    const clampedElbowPoleL=this.J.shoulderL.add(
+      alignToCorrection(rawPoleVecL,rawDirL,dirHandL)
+    );
+
+    const armL=this.twoBone(
+      this.J.shoulderL,clampedHandL,clampedElbowPoleL,
+      this.L.upperArm,this.L.forearm,this.bend.elbowL,
+      ROM.elbow.min,ROM.elbow.max,refBendElbowL,ROM.elbowBendDeviation
+    );
+    this.J.elbowL=armL.mid;this.J.wristL=armL.end;this.bend.elbowL=armL.bend;
+
+    /* BRAS D */
+    const rawHandR=this.T.handR.sub(this.J.shoulderR);
+    const rawDirR=safeNorm(rawHandR,new Vec3(1,0,0));
+    let dirHandR=coneClamp(rawHandR,restArm,ROM.shoulderCone);
+    dirHandR=excludeCone(dirHandR,backwardUpper,ROM.shoulderBack);
+    const clampedHandR=this.J.shoulderR.add(dirHandR.mul(rawHandR.len()));
+
+    const rawPoleVecR=this.T.elbowR.sub(this.J.shoulderR);
+    const clampedElbowPoleR=this.J.shoulderR.add(
+      alignToCorrection(rawPoleVecR,rawDirR,dirHandR)
+    );
+
+    const armR=this.twoBone(
+      this.J.shoulderR,clampedHandR,clampedElbowPoleR,
+      this.L.upperArm,this.L.forearm,this.bend.elbowR,
+      ROM.elbow.min,ROM.elbow.max,refBendElbowR,ROM.elbowBendDeviation
+    );
+    this.J.elbowR=armR.mid;this.J.wristR=armR.end;this.bend.elbowR=armR.bend;
+
+    this.solveHand("L");
+    this.solveHand("R");
+
+    this.J.hipL=this.J.pelvis.add(f.right.mul(-this.L.hipWidth/2));
+    this.J.hipR=this.J.pelvis.add(f.right.mul(this.L.hipWidth/2));
+
+    /* JAMBE G */
+    const rawAnkleL=this.T.ankleL.sub(this.J.hipL);
+    const rawDirLegL=safeNorm(rawAnkleL,new Vec3(0,1,0));
+    let dirAnkleL=coneClamp(rawAnkleL,restLeg,ROM.hipCone);
+    dirAnkleL=excludeCone(dirAnkleL,backward,ROM.hipBack);
+    const clampedAnkleL=this.J.hipL.add(dirAnkleL.mul(rawAnkleL.len()));
+
+    const rawPoleKneeL=this.T.kneeL.sub(this.J.hipL);
+    const clampedKneePoleL=this.J.hipL.add(
+      alignToCorrection(rawPoleKneeL,rawDirLegL,dirAnkleL)
+    );
+
+    const legL=this.twoBone(
+      this.J.hipL,clampedAnkleL,clampedKneePoleL,
+      this.L.thigh,this.L.shin,this.bend.kneeL,
+      ROM.knee.min,ROM.knee.max,refBendKneeL,ROM.kneeBendDeviation
+    );
+    this.J.kneeL=legL.mid;this.J.ankleL=legL.end;this.bend.kneeL=legL.bend;
+
+    /* diagnostic non-intrusif : valeurs intermédiaires de la chaîne hanche->cheville,
+       pour instrumentation/calibration uniquement, aucune influence sur le solveur */
+    this._diag=this._diag||{};
+    this._diag.L={
+      rawAnkleTarget:this.T.ankleL.clone(),
+      clampedAnkle:clampedAnkleL.clone(),
+      solvedAnkle:this.J.ankleL.clone()
+    };
+
+    /* JAMBE D */
+    const rawAnkleR=this.T.ankleR.sub(this.J.hipR);
+    const rawDirLegR=safeNorm(rawAnkleR,new Vec3(0,1,0));
+    let dirAnkleR=coneClamp(rawAnkleR,restLeg,ROM.hipCone);
+    dirAnkleR=excludeCone(dirAnkleR,backward,ROM.hipBack);
+    const clampedAnkleR=this.J.hipR.add(dirAnkleR.mul(rawAnkleR.len()));
+
+    const rawPoleKneeR=this.T.kneeR.sub(this.J.hipR);
+    const clampedKneePoleR=this.J.hipR.add(
+      alignToCorrection(rawPoleKneeR,rawDirLegR,dirAnkleR)
+    );
+
+    const legR=this.twoBone(
+      this.J.hipR,clampedAnkleR,clampedKneePoleR,
+      this.L.thigh,this.L.shin,this.bend.kneeR,
+      ROM.knee.min,ROM.knee.max,refBendKneeR,ROM.kneeBendDeviation
+    );
+    this.J.kneeR=legR.mid;this.J.ankleR=legR.end;this.bend.kneeR=legR.bend;
+
+    /* --- PASSE 1 : IK jambe + pied déjà résolus ci-dessus (twoBone + makeFoot) ---
+       --- PASSE CONTACT : le sol produit une contrainte, jamais une mutation directe --- */
+    const footForwardL=this.makeFoot("L",f);
+    const footForwardR=this.makeFoot("R",f);
+    const footForward={L:footForwardL,R:footForwardR};
+
+    for(const s of ["L","R"]){
+      if(!this.grounded[s])continue;
+      const correction=this.getGroundCorrection(s);
+      if(!correction.needsCorrection)continue;
+
+      /* --- PASSE 2 : re-résolution IK avec la nouvelle cible de cheville ---
+         On redemande à twoBone() de reconstruire hip->knee->ankle pour cette
+         cible corrigée, exactement comme la résolution initiale, afin que la
+         longueur cuisse/tibia reste garantie. Une seule passe : déterministe,
+         pas de boucle, pas d'oscillation. */
+      const hip=this.J["hip"+s];
+      const pole=this.J["knee"+s]; /* mémoire du coude/genou courant comme pole */
+      const bendMem=this.bend["knee"+s];
+      const refBendKnee=s==="L"?refBendKneeL:refBendKneeR;
+
+      const leg=this.twoBone(
+        hip,correction.targetAnkle,pole,
+        this.L.thigh,this.L.shin,bendMem,
+        ROM.knee.min,ROM.knee.max,refBendKnee,ROM.kneeBendDeviation
+      );
+      this.J["knee"+s]=leg.mid;
+      this.J["ankle"+s]=leg.end;
+      this.bend["knee"+s]=leg.bend;
+
+      /* le pied doit être recalculé après ce nouvel ankle, en réutilisant
+         l'orientation figée avant contact (stratégie B validée expérimentalement) :
+         on ne redérive plus forward depuis T.toes-ankle ici, ce qui casse la
+         boucle de rétroaction ankle->forward->pied->nouvelle demande de contact */
+      this.makeFoot(s,f,footForward[s]);
+    }
+
+    this.joints.elbowL.rotation.x=0;
+    this.joints.elbowR.rotation.x=0;
+
+    for(const k of Object.keys(this.joints)){
+      if(this.J[k])this.joints[k].position=this.J[k].clone();
+      this.joints[k].clampRotation();
+      this.joints[k].rebuildLocalFrame();
+    }
+
+    this.twist.forearmL=clamp(this.twist.forearmL,-ROM.forearmTwist,ROM.forearmTwist);
+    this.twist.forearmR=clamp(this.twist.forearmR,-ROM.forearmTwist,ROM.forearmTwist);
+    this.solveForearmTwist("L");
+    this.solveForearmTwist("R");
+
+    /* validation post-résolution : ne corrige rien, se contente de détecter
+       et journaliser toute désarticulation ou NaN, pour diagnostic. */
+    this._lastValidation=this.validateSkeletonLengths();
+    if(this._lastValidation.length&&typeof console!=="undefined"&&console.warn){
+      console.warn("[ArtPose] validation squelette:",this._lastValidation);
+    }
+  }
+
+  /* Vérifie que chaque segment rigide garde sa longueur attendue, et que
+     chaque articulation critique a des coordonnées finies (pas de NaN/Infinity).
+     Ne modifie jamais l'état du puppet : uniquement un diagnostic. */
+  validateSkeletonLengths(){
+    const errors=[];
+
+    const check=(name,a,b,expected)=>{
+      if(!a||!b){errors.push(`${name}: joint manquant`);return;}
+      if(!isValidVec3(a)||!isValidVec3(b)){
+        errors.push(`${name}: NaN/Infinity`);
+        return;
+      }
+      const actual=dist(a,b);
+      if(!Number.isFinite(actual)){
+        errors.push(`${name}: invalid length`);
+        return;
+      }
+      if(Math.abs(actual-expected)>0.5){
+        errors.push(`${name}: expected ${expected.toFixed(2)}, got ${actual.toFixed(2)}`);
+      }
+    };
+
+    check("upperArmL",this.J.shoulderL,this.J.elbowL,this.L.upperArm);
+    check("forearmL",this.J.elbowL,this.J.wristL,this.L.forearm);
+    check("upperArmR",this.J.shoulderR,this.J.elbowR,this.L.upperArm);
+    check("forearmR",this.J.elbowR,this.J.wristR,this.L.forearm);
+    check("thighL",this.J.hipL,this.J.kneeL,this.L.thigh);
+    check("shinL",this.J.kneeL,this.J.ankleL,this.L.shin);
+    check("thighR",this.J.hipR,this.J.kneeR,this.L.thigh);
+    check("shinR",this.J.kneeR,this.J.ankleR,this.L.shin);
+    check("neck",this.J.chest,this.J.neck,this.L.neck);
+    check("head",this.J.neck,this.J.head,this.L.head);
+
+    const criticalJoints=[
+      "pelvis","spineMid","chest","neck","head",
+      "shoulderL","elbowL","wristL",
+      "shoulderR","elbowR","wristR",
+      "hipL","kneeL","ankleL",
+      "hipR","kneeR","ankleR"
+    ];
+    for(const name of criticalJoints){
+      if(!isValidVec3(this.J[name])){
+        errors.push(`${name}: NaN/Infinity`);
+      }
+    }
+
+    return errors;
+  }
+
+  computeClavicle(side,f){
+    const target=this.T["hand"+side];
+    const chest=this.J.chest;
+    const dir=safeNorm(target.sub(chest),f.right);
+    const vertical=clamp(Math.abs(Vec3.dot(dir,new Vec3(0,1,0))),0,1);
+    const sign=side==="L"?-1:1;
+    return f.right.mul(sign*vertical*9);
+  }
+
+  solveHand(side){
+    const wrist=this.J["wrist"+side];
+    const elbow=this.J["elbow"+side];
+    const armDir=safeNorm(wrist.sub(elbow),side==="L"?new Vec3(-1,0,0):new Vec3(1,0,0));
+    this.J["hand"+side]=wrist.add(armDir.mul(this.L.hand));
+  }
+
+  solveForearmTwist(side){
+    const elbow=this.J["elbow"+side];
+    const wrist=this.J["wrist"+side];
+    const axis=safeNorm(wrist.sub(elbow),side==="L"?new Vec3(-1,0,0):new Vec3(1,0,0));
+    let perp=Vec3.cross(axis,new Vec3(0,1,0));
+    if(perp.len()<1e-6)perp=Vec3.cross(axis,new Vec3(0,0,1));
+    perp=perp.normalize();
+    const angle=clamp(this.twist["forearm"+side],-ROM.forearmTwist,ROM.forearmTwist);
+    const twisted=rotateAroundAxis(perp,axis,angle);
+    this.J["twistMark"+side]=wrist.add(twisted.mul(14));
+  }
+
+  makeFoot(side,f,forwardOverride){
+    const ankle=this.J["ankle"+side];
+    let forward;
+    if(forwardOverride){
+      /* orientation figée fournie par l'appelant (passe de contact) :
+         on ne redérive PAS forward depuis T.toes-ankle, pour ne pas
+         recréer la boucle de rétroaction ankle->forward->pied->contact */
+      forward=forwardOverride.clone();
+    }else{
+      forward=this.T["toes"+side].sub(ankle);
+      if(forward.len()<1e-6)forward=f.forward.clone();
+      forward=forward.normalize();
+      if(f){
+        forward=coneClamp(forward,f.forward,ROM.ankleForwardCone);
+        if(Vec3.dot(forward,f.forward)<0)forward=f.forward.clone();
+      }
+    }
+    this.J["heel"+side]=ankle.sub(forward.mul(15));
+    this.J["midFoot"+side]=ankle.add(forward.mul(this.L.foot*.45));
+    this.J["toes"+side]=ankle.add(forward.mul(this.L.foot));
+    return forward;
+  }
+
+  /* CONTACT — producteur de contrainte pur, ne modifie jamais this.J.
+     Calcule de combien le pied devrait être translaté verticalement pour que
+     son point le plus bas touche exactement le sol, et retourne la position
+     de cheville qui en résulterait. C'est à l'appelant (solve()) de décider
+     de redemander à l'IK (twoBone) de re-résoudre la jambe avec cette cible :
+     CONTACT ne touche jamais this.J directement. */
+  getGroundCorrection(side){
+    const heel=this.J["heel"+side],mid=this.J["midFoot"+side],
+          ankle=this.J["ankle"+side],toes=this.J["toes"+side];
+    if(!heel||!mid||!ankle||!toes)return{needsCorrection:false};
+    const lowest=Math.max(heel.y,mid.y,ankle.y,toes.y);
+    const dy=this.groundY-lowest;
+    /* déjà au sol (à une tolérance flottante près) : aucune correction requise */
+    if(Math.abs(dy)<1e-6)return{needsCorrection:false};
+    const targetAnkle=ankle.clone();
+    targetAnkle.y+=dy;
+    return{needsCorrection:true,dy,targetAnkle};
+  }
+
+  releaseFoot(side){this.grounded[side]=false;}
+
+  /* Centre de masse approximatif, calculé comme barycentre pondéré de
+     11 articulations (voir COM_WEIGHTS). Fonction de LECTURE pure :
+     jamais appelée par solve(), n'influence jamais la résolution IK.
+     Étape B1 du chantier Balance : rend le COM explicite/testable,
+     comportement numériquement identique à la version précédente. */
+  com(){
+    const w=COM_WEIGHTS;
+    const list=[
+      [this.J.pelvis,w.pelvis],[this.J.chest,w.chest],[this.J.head,w.head],
+      [this.J.elbowL,w.elbow],[this.J.wristL,w.wrist],
+      [this.J.elbowR,w.elbow],[this.J.wristR,w.wrist],
+      [this.J.kneeL,w.knee],[this.J.ankleL,w.ankle],
+      [this.J.kneeR,w.knee],[this.J.ankleR,w.ankle]
+    ];
+    let p=new Vec3(),m=0;
+    for(const[q,weight] of list){p=p.add(q.mul(weight));m+=weight;}
+    return p.mul(1/m);
+  }
+
+  /* Chantier Balance, étape B2 — Support Region (lecture seule).
+
+     Retourne les points RÉELLEMENT en contact avec le sol pour un pied
+     donné, parmi {heel, midFoot, ankle, toes}, à CONTACT_EPSILON près.
+     Décision explicite : pas de projection heel→toes, pas d'invention
+     d'un contact que le solveur n'a pas produit. Si le pied de repos
+     est structurellement sur les orteils (comme c'est le cas dans la
+     pose neutre actuelle), cette fonction le rapporte fidèlement — elle
+     ne le "corrige" pas, ce serait un chantier biomécanique séparé.
+
+     grounded[side]===false signifie que ce pied n'est pas censé toucher
+     le sol (pied levé) : on ne rapporte aucun contact dans ce cas, même
+     si sa géométrie croise accidentellement groundY en transit. */
+  getFootContactPoints(side){
+    if(!this.grounded[side])return[];
+    const candidates=[
+      ["heel",this.J["heel"+side]],
+      ["midFoot",this.J["midFoot"+side]],
+      ["ankle",this.J["ankle"+side]],
+      ["toes",this.J["toes"+side]]
+    ];
+    const contacts=[];
+    for(const[name,pt] of candidates){
+      if(!pt||!isValidVec3(pt))continue;
+      if(Math.abs(pt.y-this.groundY)<=CONTACT_EPSILON){
+        contacts.push({name,point:pt.clone()});
+      }
+    }
+    return contacts;
+  }
+
+  /* Assemble les contacts des deux pieds en une région de support
+     descriptive. Ne fabrique JAMAIS un polygone si la géométrie réelle
+     ne fournit pas assez de points distincts pour ça — un support
+     dégénéré (point ou segment) est un résultat légitime, pas une
+     erreur à combler artificiellement.
+
+     type:
+       "none"    → aucun contact (0 point au total)
+       "point"   → un seul point de contact au total
+       "segment" → deux points de contact distincts
+       "polygon" → trois points de contact distincts ou plus
+
+     Le champ hull n'est PAS une enveloppe convexe calculée : c'est la
+     liste brute des points de contact, dans l'ordre où ils ont été
+     trouvés (L puis R). Le calcul d'une véritable enveloppe convexe
+     (pour un polygone propre) est un raffinement volontairement laissé
+     à un chantier ultérieur — B2 ne fait que décrire fidèlement ce que
+     produit la pose, sans construire de géométrie supplémentaire. */
+  getSupportRegion(){
+    const contactsL=this.getFootContactPoints("L").map(c=>({side:"L",...c}));
+    const contactsR=this.getFootContactPoints("R").map(c=>({side:"R",...c}));
+    const all=[...contactsL,...contactsR];
+
+    let type;
+    if(all.length===0)type="none";
+    else if(all.length===1)type="point";
+    else if(all.length===2)type="segment";
+    else type="polygon";
+
+    return{
+      type,
+      contacts:[
+        {side:"L",points:contactsL},
+        {side:"R",points:contactsR}
+      ],
+      hull:all.map(c=>c.point)
+    };
+  }
+
+  /* Chantier Balance, étape B3 — balanceState (lecture seule, aucune mutation).
+
+     Teste si la projection du COM sur le plan du sol (y=groundY) appartient
+     à la région de support actuelle. Périmètre volontairement limité :
+
+       NONE    → stable=false (aucun support, sans ambiguïté possible)
+       POINT   → stable = distance2D(COM projeté, point) <= BALANCE_POINT_EPSILON
+       SEGMENT → stable = distance2D(COM projeté, segment) <= BALANCE_POINT_EPSILON
+                 (distance point-segment standard, projection clampée sur [0,1]
+                 pour rester sur le segment, pas sur sa droite infinie)
+       POLYGON → si le hull réel (après convexHull2D) dégénère en segment ou
+                point (contacts colinéaires ou confondus), on retombe sur
+                le test correspondant déjà validé ci-dessus — c'est
+                exactement la décision B3-bis : le nombre de contacts
+                bruts ne détermine pas la dimension géométrique réelle.
+                Pour un vrai polygone (hull ≥3 sommets, aire non nulle),
+                stable = pointInConvexPolygon2D(COM projeté, hull,
+                BALANCE_POINT_EPSILON) — chantier B4. Le hull étant
+                garanti convexe par construction (convexHull2D), le test
+                côté-par-côté est exact, pas une approximation.
+
+     Ne modifie jamais this.T, this.J, ni aucun état du puppet. */
+  balanceState(){
+    const com=this.com();
+    const support=this.getSupportRegion();
+    const projectedCom=new Vec3(com.x,this.groundY,com.z);
+
+    const distToPoint=(p,pt)=>Math.hypot(p.x-pt.x,p.z-pt.z);
+    const distToSegment=(p,a,b)=>{
+      const abx=b.x-a.x,abz=b.z-a.z;
+      const abLenSq=abx*abx+abz*abz;
+      let t;
+      if(abLenSq<1e-12){
+        t=0;
+      }else{
+        const apx=p.x-a.x,apz=p.z-a.z;
+        t=clamp((apx*abx+apz*abz)/abLenSq,0,1);
+      }
+      const cx=a.x+abx*t,cz=a.z+abz*t;
+      return Math.hypot(p.x-cx,p.z-cz);
+    };
+
+    let stable;
+    let geometry=support.type; /* type réel après reclassification éventuelle (B3-bis) */
+
+    if(support.type==="none"){
+      stable=false;
+    }else if(support.type==="point"){
+      stable=distToPoint(projectedCom,support.hull[0])<=BALANCE_POINT_EPSILON;
+    }else if(support.type==="segment"){
+      stable=distToSegment(projectedCom,support.hull[0],support.hull[1])<=BALANCE_POINT_EPSILON;
+    }else{
+      /* polygon déclaré par getSupportRegion (3+ contacts bruts) :
+         on reconstruit la géométrie réelle avant de décider du test */
+      const hull=convexHull2D(support.hull);
+      const area=polygonArea2D(hull);
+
+      if(hull.length===0){
+        geometry="none";
+        stable=false;
+      }else if(hull.length===1){
+        geometry="point";
+        stable=distToPoint(projectedCom,hull[0])<=BALANCE_POINT_EPSILON;
+      }else if(hull.length===2||area<=1e-9){
+        geometry="segment";
+        stable=distToSegment(projectedCom,hull[0],hull[1])<=BALANCE_POINT_EPSILON;
+      }else{
+        /* vrai polygone (≥3 sommets, aire non nulle) : le hull est
+           garanti convexe (produit par convexHull2D), donc le test
+           côté-par-côté est valide et suffisant */
+        geometry="polygon";
+        stable=pointInConvexPolygon2D(projectedCom,hull,BALANCE_POINT_EPSILON);
+      }
+    }
+
+    return{com,projectedCom,support,geometry,stable};
+  }
+}
+
+/* ============================================================
+   CAMÉRA 3D
+============================================================ */
+
+class Camera{
+  constructor(){
+    this.yaw=Math.PI;
+    this.pitch=-.08;
+    this.distance=560;
+    this.focal=570;
+    this.panX=0;this.panY=0;
+    this.W=400;this.H=460;
+  }
+  rotateV(v){
+    const cy=Math.cos(this.yaw),sy=Math.sin(this.yaw);
+    const cp=Math.cos(this.pitch),sp=Math.sin(this.pitch);
+    const x=cy*v.x+sy*v.z;
+    const z=-sy*v.x+cy*v.z;
+    const y=cp*v.y-sp*z;
+    const zz=sp*v.y+cp*z;
+    return new Vec3(x,y,zz);
+  }
+  inverseRotateV(v){
+    const cy=Math.cos(this.yaw),sy=Math.sin(this.yaw);
+    const cp=Math.cos(this.pitch),sp=Math.sin(this.pitch);
+    const y=cp*v.y+sp*v.z;
+    const z=-sp*v.y+cp*v.z;
+    const x=cy*v.x-sy*z;
+    const zz=sy*v.x+cy*z;
+    return new Vec3(x,y,zz);
+  }
+  project(worldPt){
+    const r=this.rotateV(worldPt);
+    const depth=Math.max(100,this.distance+r.z);
+    const scale=this.focal/depth;
+    return{
+      x:this.W/2+this.panX+r.x*scale,
+      y:this.H/2+this.panY+r.y*scale,
+      z:r.z,
+      scale
+    };
+  }
+  unproject(sx,sy,refWorldPt){
+    const r=this.rotateV(refWorldPt);
+    const depth=Math.max(100,this.distance+r.z);
+    const scale=this.focal/depth;
+    const rx=(sx-this.W/2-this.panX)/scale;
+    const ry=(sy-this.H/2-this.panY)/scale;
+    return this.inverseRotateV(new Vec3(rx,ry,r.z));
+  }
+  reset(){this.yaw=Math.PI;this.pitch=-.08;this.distance=560;this.panX=0;this.panY=0;}
+}
+
+/* ============================================================
+   HANDLE MAP
+============================================================ */
+
+const HANDLE_MAP={
+  pelvis:{T:"pelvis",J:"pelvis"},
+  torso:{T:"torso",J:"chest"},
+  spineMid:{T:null,J:"spineMid"},
+  head:{T:"headTarget",J:"head"},
+  shoulderL:{T:"shoulderPivotL",J:"shoulderL"},
+  shoulderR:{T:"shoulderPivotR",J:"shoulderR"},
+  handL:{T:"handL",J:"wristL"},
+  handR:{T:"handR",J:"wristR"},
+  elbowL:{T:"elbowL",J:"elbowL"},
+  elbowR:{T:"elbowR",J:"elbowR"},
+  hipL:{T:"pelvis",J:"hipL"},
+  hipR:{T:"pelvis",J:"hipR"},
+  kneeL:{T:"kneeL",J:"kneeL"},
+  kneeR:{T:"kneeR",J:"kneeR"},
+  ankleL:{T:"ankleL",J:"ankleL"},
+  ankleR:{T:"ankleR",J:"ankleR"},
+  toesL:{T:"toesL",J:"toesL"},
+  toesR:{T:"toesR",J:"toesR"},
+  twistL:{T:null,J:"twistMarkL"},
+  twistR:{T:null,J:"twistMarkR"}
+};
+const HANDLE_KEYS=Object.keys(HANDLE_MAP);
+
+/* ============================================================
+   RENDERER SVG 3D
+============================================================ */
+
+class Renderer3D{
+  constructor(svg,camera){
+    this.svg=svg;
+    this.cam=camera;
+    this.W=400;this.H=460;
+    this.cam.W=this.W;this.cam.H=this.H;
+    this._dragStartT={};
+    this.showAxes=false;
+    this.showHandles=true;
+    this.showCOM=true;
+  }
+
+  ensureViewBox(){
+    this.svg.setAttribute("viewBox",`0 0 ${this.W} ${this.H}`);
+    this.svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+  }
+
+  /* --- helpers --- */
+  line(parts,a,b,cls){
+    const A=this.cam.project(a),B=this.cam.project(b);
+    parts.push(`<line class="${cls}" x1="${A.x.toFixed(1)}" y1="${A.y.toFixed(1)}" x2="${B.x.toFixed(1)}" y2="${B.y.toFixed(1)}"/>`);
+  }
+  circ(parts,p,r,cls){
+    const P=this.cam.project(p);
+    const rr=Math.max(3,r*P.scale);
+    parts.push(`<circle class="${cls}" cx="${P.x.toFixed(1)}" cy="${P.y.toFixed(1)}" r="${rr.toFixed(1)}"/>`);
+  }
+
+  /* --- test de collision en coordonnées SVG --- */
+  hitFromSvg(puppet,vx,vy){
+    let best=null,bestD=Infinity;
+    for(const key of HANDLE_KEYS){
+      const m=HANDLE_MAP[key];
+      const worldPt=puppet.J[m.J]||(m.T?puppet.T[m.T]:null);
+      if(!worldPt)continue;
+      const P=this.cam.project(worldPt);
+      const d=Math.hypot(P.x-vx,P.y-vy);
+      if(d<48&&d<bestD){best=key;bestD=d;}
+    }
+    return best;
+  }
+
+  /* --- applique un drag --- */
+  moveTarget(puppet,key,vx,vy,stableRef,startScreen){
+    const m=HANDLE_MAP[key];
+    if(!m)return;
+
+    if(key==="twistL"||key==="twistR"){
+      const side=key==="twistL"?"L":"R";
+      const elbow=puppet.J["elbow"+side];
+      const wrist=puppet.J["wrist"+side];
+      if(!elbow||!wrist)return;
+      const axis=safeNorm(wrist.sub(elbow),side==="L"?new Vec3(-1,0,0):new Vec3(1,0,0));
+      let perp=Vec3.cross(axis,new Vec3(0,1,0));
+      if(perp.len()<1e-6)perp=Vec3.cross(axis,new Vec3(0,0,1));
+      perp=perp.normalize();
+      const wristScreen=this.cam.project(wrist);
+      const refScreen=this.cam.project(wrist.add(perp.mul(14)));
+      const a0=Math.atan2(refScreen.y-wristScreen.y,refScreen.x-wristScreen.x);
+      const a1=Math.atan2(vy-wristScreen.y,vx-wristScreen.x);
+      let delta=a1-a0;
+      while(delta>Math.PI)delta-=Math.PI*2;
+      while(delta<-Math.PI)delta+=Math.PI*2;
+      puppet.twist["forearm"+side]=clamp(delta,-ROM.forearmTwist,ROM.forearmTwist);
+      return;
+    }
+
+    /* haussement d'épaule : glisser vers le haut = épaule qui monte,
+       vers le bas = épaule qui descend. Amplitude limitée (ROM.shoulderShrug). */
+    if(key==="shoulderL"||key==="shoulderR"){
+      const side=key==="shoulderL"?"L":"R";
+      const origin=startScreen||{x:vx,y:vy};
+      if(this._dragStartT[key]===undefined){
+        this._dragStartT[key]=puppet.T["shoulderPivot"+side]||0;
+      }
+      const dy=origin.y-vy; /* positif quand on glisse vers le haut */
+      const delta=dy*0.012;
+      puppet.T["shoulderPivot"+side]=clamp(
+        this._dragStartT[key]+delta,-ROM.shoulderShrug,ROM.shoulderShrug
+      );
+      return;
+    }
+
+    const refWorld=stableRef||puppet.J[m.J]||(m.T?puppet.T[m.T]:null);
+    if(!refWorld)return;
+
+    if(key==="spineMid"){
+      /* deux comportements mélangés progressivement selon la direction du drag :
+         - composante VERTICALE : le bassin monte/descend, les jambes s'ajustent
+           en IK (s'étirent ou plient) puisque les chevilles restent fixes au sol,
+           et le buste reste vertical (pas de rotation de flexion)
+         - composante HORIZONTALE : flexion avant/arrière + inclinaison latérale
+           du buste (comportement précédent), avec une bascule vers l'arrière
+           possible mais jamais automatique */
+      const origin=startScreen||{x:vx,y:vy};
+      if(this._dragStartT[key]===undefined){
+        this._dragStartT[key]={
+          flex:puppet.T.torsoFlex||0,
+          lat:puppet.T.torsoLateral||0,
+          pelvisY:puppet.T.pelvis.y
+        };
+      }
+      const start=this._dragStartT[key];
+      const dxScreen=vx-origin.x;
+      const dyScreen=vy-origin.y;
+      const mag=Math.hypot(dxScreen,dyScreen);
+
+      if(mag<6){return;} /* zone morte : ignore les micro-mouvements */
+
+      /* poids de chaque comportement selon l'angle du geste :
+         0° (pur vertical) -> tout en mode A ; 90° (pur horizontal) -> tout en mode B */
+      const angleFromVertical=Math.atan2(Math.abs(dxScreen),Math.abs(dyScreen)); /* 0=vertical, PI/2=horizontal */
+      const DEAD=12*Math.PI/180; /* zone morte autour des deux axes purs, en degrés */
+      let wHoriz=(angleFromVertical-DEAD)/((Math.PI/2)-2*DEAD);
+      wHoriz=clamp(wHoriz,0,1);
+      /* lissage doux (ease) pour une transition progressive plutôt que linéaire brute */
+      wHoriz=wHoriz*wHoriz*(3-2*wHoriz);
+      const wVert=1-wHoriz;
+
+      /* -- composante A : hauteur du bassin (mode vertical) -- */
+      /* glisser vers le BAS (dyScreen>0) rapproche le bassin du sol (le fait descendre).
+         Position bornée par la géométrie réelle des jambes : le bassin ne peut pas
+         monter au-delà d'une extension quasi complète, ni descendre plus qu'un accroupi profond. */
+      const legLen=puppet.L.thigh+puppet.L.shin;
+      const ankleY=puppet.groundY-25;
+      const minPelvisY=ankleY-legLen*0.92; /* jambes presque tendues */
+      const maxPelvisY=ankleY-legLen*0.30; /* accroupi profond */
+      const rawPelvisY=start.pelvisY+dyScreen*0.6*wVert;
+      const newPelvisY=clamp(rawPelvisY,minPelvisY,maxPelvisY);
+      puppet.T.pelvis=new Vec3(puppet.T.pelvis.x,newPelvisY,puppet.T.pelvis.z);
+
+      /* -- composante B : flexion/inclinaison du buste (mode horizontal) -- */
+      const flex=clamp(start.flex-dyScreen*0.012*wHoriz,-ROM.torsoExtension,ROM.torsoFlexion);
+      const lat=clamp(start.lat+dxScreen*0.010*wHoriz,-ROM.torsoLateral,ROM.torsoLateral);
+      puppet.T.torsoFlex=flex;
+      puppet.T.torsoLateral=lat;
+      return;
+    }
+
+    let newWorld=this.cam.unproject(vx,vy,refWorld);
+
+    const isDelta=key==="hipL"||key==="hipR";
+
+    if(isDelta){
+      const originScreen=startScreen||{x:vx,y:vy};
+      const originWorld=this.cam.unproject(originScreen.x,originScreen.y,refWorld);
+      const delta=newWorld.sub(originWorld);
+      if(this._dragStartT[key]===undefined){
+        this._dragStartT[key]=puppet.T[m.T].clone();
+      }
+      puppet.T[m.T]=this._dragStartT[key].add(delta);
+    }else{
+      const rootMap={
+        handL:"shoulderL",handR:"shoulderR",
+        elbowL:"shoulderL",elbowR:"shoulderR",
+        ankleL:"hipL",ankleR:"hipR",
+        kneeL:"hipL",kneeR:"hipR",
+        toesL:"ankleL",toesR:"ankleR",
+        head:"neck"
+      };
+      /* Ces valeurs sont un pré-clamp de CONFORT DE DRAG uniquement (éviter
+         que le doigt traîne la cible à une distance absurde de son ancrage
+         anatomique) — ce ne sont PAS des garanties de longueur de segment.
+         Pour "head" en particulier (chantier HEAD/NECK, Option C) : la vraie
+         garantie distance(neck,head)===L.head est désormais assurée
+         inconditionnellement par coneClamp() dans solve(), quelle que soit
+         cette valeur de pré-clamp. 22 reste une valeur de confort de drag,
+         pas une longueur de segment — L.head=38 n'a pas sa place ici. */
+      const maxReach={
+        handL:122,handR:122,elbowL:130,elbowR:130,
+        ankleL:170,ankleR:170,kneeL:182,kneeR:182,
+        toesL:55,toesR:55,head:22
+      };
+      const rootKey=rootMap[key];
+      const max=maxReach[key];
+      if(rootKey&&max){
+        const root=puppet.J[rootKey];
+        if(root){
+          const diff=newWorld.sub(root);
+          if(diff.len()>max)newWorld=root.add(diff.normalize().mul(max));
+        }
+      }
+      puppet.T[m.T]=newWorld;
+    }
+
+    if(key==="ankleL"||key==="toesL")puppet.releaseFoot("L");
+    if(key==="ankleR"||key==="toesR")puppet.releaseFoot("R");
+  }
+
+  /* --- fond --- */
+  drawBackground(parts,bgFill){
+    parts.push(`<rect x="0" y="0" width="${this.W}" height="${this.H}" fill="${bgFill||'none'}"/>`);
+  }
+
+  drawGrid(parts,puppet){
+    const y=puppet.groundY;
+    for(let x=-450;x<=450;x+=50){
+      this.line(parts,new Vec3(x,y,-250),new Vec3(x,y,250),"grid");
+    }
+    for(let z=-250;z<=250;z+=50){
+      this.line(parts,new Vec3(-450,y,z),new Vec3(450,y,z),"grid");
+    }
+    this.line(parts,new Vec3(-450,y,0),new Vec3(450,y,0),"ground");
+  }
+
+  drawAxes(parts,joint){
+    if(!joint)return;
+    const o=joint.position,len=20;
+    this.line(parts,o,o.add(joint.local.x.mul(len)),"axis axisX");
+    this.line(parts,o,o.add(joint.local.y.mul(len)),"axis axisY");
+    this.line(parts,o,o.add(joint.local.z.mul(len)),"axis axisZ");
+  }
+
+  /* --- rendu principal --- */
+  render(puppet,opts={}){
+    const J=puppet.J;
+    const sel=puppet.selected;
+    const parts=[];
+
+    if(opts.showBackground!==false)this.drawBackground(parts,opts.bgFill);
+
+    if(opts.showGrid!==false)this.drawGrid(parts,puppet);
+
+    const bones=[
+      ["pelvis","spineMid","bone"],
+      ["spineMid","chest","bone"],
+      ["chest","neck","bone"],
+      ["neck","head","bone"],
+      ["chest","clavicleL","bone clavicle"],
+      ["clavicleL","shoulderL","bone clavicle"],
+      ["chest","clavicleR","bone clavicle"],
+      ["clavicleR","shoulderR","bone clavicle"],
+      ["shoulderL","elbowL","bone"],
+      ["elbowL","wristL","bone"],
+      ["wristL","handL","bone thin"],
+      ["shoulderR","elbowR","bone"],
+      ["elbowR","wristR","bone"],
+      ["wristR","handR","bone thin"],
+      ["pelvis","hipL","bone"],
+      ["hipL","kneeL","bone"],
+      ["kneeL","ankleL","bone"],
+      ["pelvis","hipR","bone"],
+      ["hipR","kneeR","bone"],
+      ["kneeR","ankleR","bone"],
+      ["heelL","midFootL","bone thin"],
+      ["midFootL","toesL","bone thin"],
+      ["heelR","midFootR","bone thin"],
+      ["midFootR","toesR","bone thin"]
+    ];
+
+    bones
+      .filter(b=>J[b[0]]&&J[b[1]])
+      .map(b=>({b,z:(this.cam.project(J[b[0]]).z+this.cam.project(J[b[1]]).z)/2}))
+      .sort((a,b)=>b.z-a.z)
+      .forEach(o=>this.line(parts,J[o.b[0]],J[o.b[1]],o.b[2]));
+
+    /* tête ronde */
+    if(J.head){
+      const P=this.cam.project(J.head);
+      const r=22*P.scale;
+      parts.push(`<circle cx="${P.x.toFixed(1)}" cy="${P.y.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="#2b2a25" stroke-width="${(3*P.scale).toFixed(1)}"/>`);
+    }
+
+    /* marqueurs twist */
+    for(const s of ["L","R"]){
+      if(J["wrist"+s]&&J["twistMark"+s]){
+        const A=this.cam.project(J["wrist"+s]),B=this.cam.project(J["twistMark"+s]);
+        parts.push(`<line class="twistmark" x1="${A.x.toFixed(1)}" y1="${A.y.toFixed(1)}" x2="${B.x.toFixed(1)}" y2="${B.y.toFixed(1)}"/>`);
+      }
+    }
+
+    /* articulations */
+    const joints=[
+      ["pelvis",8,"joint center"],["spineMid",5,"joint"],["chest",7,"joint center"],["head",10,"joint"],
+      ["clavicleL",3,"joint"],["clavicleR",3,"joint"],
+      ["shoulderL",5,"joint center"],["shoulderR",5,"joint center"],
+      ["elbowL",5,"joint"],["elbowR",5,"joint"],
+      ["wristL",4,"joint"],["wristR",4,"joint"],
+      ["hipL",5,"joint center"],["hipR",5,"joint center"],
+      ["kneeL",5,"joint"],["kneeR",5,"joint"],
+      ["ankleL",4,"joint"],["ankleR",4,"joint"]
+    ];
+    for(const j of joints){
+      if(J[j[0]])this.circ(parts,J[j[0]],j[1],j[2]);
+    }
+
+    if(sel&&this.showAxes){
+      const joint=puppet.joints[sel];
+      if(joint)this.drawAxes(parts,joint);
+    }
+
+    /* COM */
+    if(this.showCOM&&opts.showCOM!==false){
+      const com=puppet.com();
+      const P=this.cam.project(com);
+      const Pg=this.cam.project(new Vec3(com.x,puppet.groundY,com.z));
+      parts.push(`<line class="support" x1="${P.x.toFixed(1)}" y1="${P.y.toFixed(1)}" x2="${P.x.toFixed(1)}" y2="${Pg.y.toFixed(1)}"/>`);
+      this.circ(parts,com,5,"com");
+    }
+
+    /* poignées */
+    if(this.showHandles&&opts.showHandles!==false){
+      for(const key of HANDLE_KEYS){
+        const m=HANDLE_MAP[key];
+        const worldPt=J[m.J]||(m.T?puppet.T[m.T]:null);
+        if(!worldPt)continue;
+        const P2=this.cam.project(worldPt);
+        const isSel=sel===key;
+        const isPole=key.startsWith("elbow")||key.startsWith("knee");
+        const isTwist=key.startsWith("twist");
+        let cls="handle "+(isTwist?"twist":isPole?"pole":"position");
+        if(isSel)cls="handle selected";
+        const r=isSel?16:(isTwist?9:12);
+        parts.push(`<circle class="${cls}" data-key="${key}" cx="${P2.x.toFixed(1)}" cy="${P2.y.toFixed(1)}" r="${r}"/>`);
+      }
+    }
+
+    this.svg.innerHTML=parts.join("");
+    if(this.showHandles&&opts.showHandles!==false)this.svg.classList.add("show-handles");
+    else this.svg.classList.remove("show-handles");
+  }
+}
+
+/* ============================================================
+   POSE 3D  — cibles équivalentes aux 12 poses 2D
+   On convertit chaque pose 2D en positions 3D de mains/pieds/genoux
+============================================================ */
+
+/*
+  Base neutre 3D — identique à DEFAULT du Puppet.
+  Les poses suivantes déplacent les cibles T.handL/R, T.kneeL/R, T.ankleL/R,
+  T.pelvis, T.torso, T.headOffset.
+*/
+
+function poseNeutre(){
+  return {
+    T:{
+      pelvis:new Vec3(0,45,0),
+      torso:new Vec3(0,-70,0),
+      torsoFlex:0,
+      torsoLateral:0,
+      headTarget:null,
+      handL:new Vec3(-115,-55,0),
+      handR:new Vec3(115,-55,0),
+      elbowL:new Vec3(-76,-55,-35),
+      elbowR:new Vec3(76,-55,-35),
+      kneeL:new Vec3(-34,125,25),
+      kneeR:new Vec3(34,125,25),
+      ankleL:new Vec3(-32,211,0),
+      ankleR:new Vec3(32,211,0),
+      toesL:new Vec3(-32,220,35),
+      toesR:new Vec3(32,220,35),
+      shoulderPivotL:0,
+      shoulderPivotR:0
+    },
+    twist:{forearmL:0,forearmR:0},
+    grounded:{L:true,R:true}
+  };
+}
+
+/*
+  Chaque pose fournit des positions de cibles.
+  Repère monde : +Y vers le bas (côté sol), -Z = avant anatomique, +X = droite du sujet.
+
+  Conversion : dans le 2D, angle 0 = haut, puis rotation horaire.
+  On reproduit l'allure en 3D sur le plan X-Y (Z=0 pour mains/pieds de profil).
+*/
+
+const POSES_3D=[
+  {id:"p01",name:"Neutre",build:()=>poseNeutre()},
+
+  {id:"p02",name:"Accroupi",build:()=>{
+    const p=poseNeutre();
+    p.T.pelvis=new Vec3(0,120,0);
+    p.T.torso=new Vec3(0,-10,0);
+    p.T.handL=new Vec3(-70,60,-30);
+    p.T.handR=new Vec3(70,60,-30);
+    p.T.elbowL=new Vec3(-60,110,-40);
+    p.T.elbowR=new Vec3(60,110,-40);
+    p.T.kneeL=new Vec3(-60,180,-20);
+    p.T.kneeR=new Vec3(60,180,-20);
+    p.T.ankleL=new Vec3(-40,230,0);
+    p.T.ankleR=new Vec3(40,230,0);
+    p.T.toesL=new Vec3(-40,245,35);
+    p.T.toesR=new Vec3(40,245,35);
+    return p;
+  }},
+
+  {id:"p03",name:"Assis",build:()=>{
+    const p=poseNeutre();
+    p.T.pelvis=new Vec3(0,160,0);
+    p.T.torso=new Vec3(0,60,0);
+    p.T.handL=new Vec3(-110,120,-20);
+    p.T.handR=new Vec3(110,120,-20);
+    p.T.elbowL=new Vec3(-80,130,-30);
+    p.T.elbowR=new Vec3(80,130,-30);
+    p.T.kneeL=new Vec3(-60,200,-60);
+    p.T.kneeR=new Vec3(60,200,-60);
+    p.T.ankleL=new Vec3(-45,270,-10);
+    p.T.ankleR=new Vec3(45,270,-10);
+    p.T.toesL=new Vec3(-45,285,25);
+    p.T.toesR=new Vec3(45,285,25);
+    p.grounded.L=false;p.grounded.R=false;
+    return p;
+  }},
+
+  {id:"p04",name:"Marche G",build:()=>{
+    const p=poseNeutre();
+    p.T.handL=new Vec3(-120,-40,-40);
+    p.T.handR=new Vec3(120,-70,40);
+    p.T.elbowL=new Vec3(-85,-45,-55);
+    p.T.elbowR=new Vec3(85,-65,25);
+    p.T.kneeL=new Vec3(-38,110,-40);
+    p.T.kneeR=new Vec3(38,120,25);
+    p.T.ankleL=new Vec3(-30,190,-70);
+    p.T.ankleR=new Vec3(30,205,20);
+    p.T.toesL=new Vec3(-30,200,-40);
+    p.T.toesR=new Vec3(30,220,50);
+    p.grounded.L=false;
+    return p;
+  }},
+
+  {id:"p05",name:"Marche D",build:()=>{
+    const p=poseNeutre();
+    p.T.handL=new Vec3(-120,-70,40);
+    p.T.handR=new Vec3(120,-40,-40);
+    p.T.elbowL=new Vec3(-85,-65,25);
+    p.T.elbowR=new Vec3(85,-45,-55);
+    p.T.kneeL=new Vec3(-38,120,25);
+    p.T.kneeR=new Vec3(38,110,-40);
+    p.T.ankleL=new Vec3(-30,205,20);
+    p.T.ankleR=new Vec3(30,190,-70);
+    p.T.toesL=new Vec3(-30,220,50);
+    p.T.toesR=new Vec3(30,200,-40);
+    p.grounded.R=false;
+    return p;
+  }},
+
+  {id:"p06",name:"Course",build:()=>{
+    const p=poseNeutre();
+    p.T.handL=new Vec3(-110,-10,-60);
+    p.T.handR=new Vec3(110,-80,60);
+    p.T.elbowL=new Vec3(-80,-30,-70);
+    p.T.elbowR=new Vec3(80,-60,40);
+    p.T.kneeL=new Vec3(-40,80,-70);
+    p.T.kneeR=new Vec3(40,140,40);
+    p.T.ankleL=new Vec3(-30,150,-90);
+    p.T.ankleR=new Vec3(30,220,20);
+    p.T.toesL=new Vec3(-30,160,-60);
+    p.T.toesR=new Vec3(30,235,50);
+    p.grounded.L=false;
+    return p;
+  }},
+
+  {id:"p07",name:"Saut",build:()=>{
+    const p=poseNeutre();
+    p.T.pelvis=new Vec3(0,60,0);
+    p.T.torso=new Vec3(0,-40,0);
+    p.T.handL=new Vec3(-70,-30,0);
+    p.T.handR=new Vec3(70,-30,0);
+    p.T.elbowL=new Vec3(-50,10,0);
+    p.T.elbowR=new Vec3(50,10,0);
+    p.T.kneeL=new Vec3(-60,140,-30);
+    p.T.kneeR=new Vec3(60,140,-30);
+    p.T.ankleL=new Vec3(-45,200,0);
+    p.T.ankleR=new Vec3(45,200,0);
+    p.T.toesL=new Vec3(-45,215,35);
+    p.T.toesR=new Vec3(45,215,35);
+    p.grounded.L=false;p.grounded.R=false;
+    return p;
+  }},
+
+  {id:"p08",name:"Coup poing",build:()=>{
+    const p=poseNeutre();
+    p.T.handL=new Vec3(-60,-20,-70);
+    p.T.handR=new Vec3(190,-70,0);
+    p.T.elbowL=new Vec3(-75,-50,-40);
+    p.T.elbowR=new Vec3(120,-70,0);
+    p.grounded.L=true;p.grounded.R=true;
+    return p;
+  }},
+
+  {id:"p09",name:"Coup pied",build:()=>{
+    const p=poseNeutre();
+    p.T.handL=new Vec3(-100,-30,-30);
+    p.T.handR=new Vec3(100,-50,30);
+    p.T.kneeL=new Vec3(-38,110,20);
+    p.T.kneeR=new Vec3(120,180,-20);
+    p.T.ankleL=new Vec3(-32,205,0);
+    p.T.ankleR=new Vec3(230,180,-20);
+    p.T.toesL=new Vec3(-32,220,35);
+    p.T.toesR=new Vec3(250,175,20);
+    p.grounded.L=true;p.grounded.R=false;
+    return p;
+  }},
+
+  {id:"p10",name:"Poussée",build:()=>{
+    const p=poseNeutre();
+    p.T.handL=new Vec3(-90,-40,-60);
+    p.T.handR=new Vec3(90,-40,-60);
+    p.T.elbowL=new Vec3(-75,-50,-40);
+    p.T.elbowR=new Vec3(75,-50,-40);
+    p.T.kneeL=new Vec3(-40,120,-30);
+    p.T.kneeR=new Vec3(40,120,30);
+    p.T.ankleL=new Vec3(-35,200,-20);
+    p.T.ankleR=new Vec3(35,200,20);
+    return p;
+  }},
+
+  {id:"p11",name:"Lancer",build:()=>{
+    const p=poseNeutre();
+    p.T.handL=new Vec3(-90,-40,-60);
+    p.T.handR=new Vec3(60,-90,70);
+    p.T.elbowL=new Vec3(-80,-45,-50);
+    p.T.elbowR=new Vec3(80,-80,60);
+    return p;
+  }},
+
+  {id:"p12",name:"Atteindre",build:()=>{
+    const p=poseNeutre();
+    p.T.handL=new Vec3(-50,-140,-20);
+    p.T.handR=new Vec3(90,-60,30);
+    p.T.elbowL=new Vec3(-70,-100,-30);
+    p.T.elbowR=new Vec3(85,-55,20);
+    return p;
+  }}
+];
+
+/* applique une pose 3D au puppet */
+function applyPoseToPuppet(puppet,poseData){
+  for(const k in poseData.T){
+    if(puppet.T[k]&&puppet.T[k].clone)puppet.T[k]=poseData.T[k].clone();
+    else puppet.T[k]=(poseData.T[k]&&poseData.T[k].clone)?poseData.T[k].clone():poseData.T[k];
+  }
+  if(poseData.twist){
+    puppet.twist.forearmL=poseData.twist.forearmL||0;
+    puppet.twist.forearmR=poseData.twist.forearmR||0;
+  }
+  if(poseData.grounded){
+    puppet.grounded.L=poseData.grounded.L;
+    puppet.grounded.R=poseData.grounded.R;
+  }
+  puppet.solve();
+}
+
+/* extrait une pose 3D du puppet courant */
+function extractPoseFromPuppet(puppet){
+  return{
+    T:{
+      pelvis:puppet.T.pelvis.clone(),
+      torso:puppet.T.torso.clone(),
+      torsoFlex:puppet.T.torsoFlex||0,
+      torsoLateral:puppet.T.torsoLateral||0,
+      headTarget:puppet.T.headTarget?puppet.T.headTarget.clone():null,
+      handL:puppet.T.handL.clone(),
+      handR:puppet.T.handR.clone(),
+      elbowL:puppet.T.elbowL.clone(),
+      elbowR:puppet.T.elbowR.clone(),
+      kneeL:puppet.T.kneeL.clone(),
+      kneeR:puppet.T.kneeR.clone(),
+      ankleL:puppet.T.ankleL.clone(),
+      ankleR:puppet.T.ankleR.clone(),
+      toesL:puppet.T.toesL.clone(),
+      toesR:puppet.T.toesR.clone(),
+      shoulderPivotL:puppet.T.shoulderPivotL||0,
+      shoulderPivotR:puppet.T.shoulderPivotR||0
+    },
+    twist:{forearmL:puppet.twist.forearmL,forearmR:puppet.twist.forearmR},
+    grounded:{L:puppet.grounded.L,R:puppet.grounded.R}
+  };
+}
+
+/* sérialisation JSON des Vec3 */
+function serializePose(p){
+  return{
+    T:Object.fromEntries(Object.entries(p.T).map(([k,v])=>[k,(v&&v.x!==undefined)?{x:v.x,y:v.y,z:v.z}:v])),
+    twist:p.twist,
+    grounded:p.grounded
+  };
+}
+function deserializePose(o){
+  const T={};
+  for(const k in o.T){
+    const v=o.T[k];
+    T[k]=(v&&v.x!==undefined)?new Vec3(v.x,v.y,v.z):v;
+  }
+  return{T,twist:o.twist||{forearmL:0,forearmR:0},grounded:o.grounded||{L:true,R:true}};
+}
+
+/* ============================================================
+   APPLI (état global)
+============================================================ */
+
+const app={
+  puppet:null,
+  homePuppet:null,
+  studioCam:null,
+  sceneCam:null,
+  studioRenderer:null,
+  sceneRenderer:null,
+  homeRenderer:null,
+  currentScreen:"accueil",
+  studioTab:"pose",
+  poseMode:"articulations",
+  playing:false,
+  playingSpeed:1,
+  walkMode:"walk",
+  lightAngle:-40,
+  gallery:[],
+  customLib:[],
+  activeLibId:null,
+  keyframes:[],
+  activeKF:-1,
+  undoStack:[],
+  redoStack:[],
+  drawCanvas:null,
+  drawCtx:null,
+  hasDrawing:false,
+  isDrawing:false,
+  drawUndoStack:[],
+  dragKey:null,
+  dragPointerId:null,
+  dragRefWorld:null,
+  dragRefScreen:null,
+  orbitPointerId:null,
+  pointers:new Map(),
+  lastPinchDist:null,
+  lastPinchCenter:null,
+  sceneCamState:{x:0,y:0,zoom:1,rotation:0},
+  sceneFigState:{x:0,y:0,scale:1},
+  animationFrame:0,
+  playStart:0,
+  toastTimer:null,
+  lastPulse:0
+};
+
+/* charge la galerie / lib depuis localStorage */
+app.gallery=load("artpose3d-gallery",[]);
+if(!Array.isArray(app.gallery))app.gallery=[];
+app.customLib=load("artpose3d-custom-lib",[]);
+if(!Array.isArray(app.customLib))app.customLib=[];
+app.lightAngle=load("artpose3d-light-angle",-40);
+{
+  const m=load("artpose3d-motion",null);
+  if(m){
+    if(Array.isArray(m.keyframes))app.keyframes=m.keyframes;
+    if(m.speed)app.playingSpeed=m.speed;
+  }
+}
+
+/* ============================================================
+   INITIALISATION
+============================================================ */
+
+const svgHome=$("svg-home");
+const svgStudio=$("svg-studio");
+const svgScene=$("svg-scene");
+
+/* HOME — caméra figée, pas de poignées */
+app.homePuppet=new Puppet();
+app.homeCam=new Camera();
+app.homeCam.W=400;app.homeCam.H=460;
+app.homeCam.distance=620;
+app.homeRenderer=new Renderer3D(svgHome,app.homeCam);
+app.homeRenderer.showHandles=false;
+app.homeRenderer.showCOM=false;
+app.homeRenderer.showAxes=false;
+
+/* STUDIO */
+app.puppet=new Puppet();
+app.studioCam=new Camera();
+app.studioCam.W=400;app.studioCam.H=460;
+app.studioCam.distance=620;
+app.studioRenderer=new Renderer3D(svgStudio,app.studioCam);
+app.studioRenderer.showCOM=false;
+app.studioRenderer.showAxes=false;
+
+/* SCÈNE — même puppet pour cohérence */
+app.sceneCam=new Camera();
+app.sceneCam.W=400;app.sceneCam.H=460;
+app.sceneCam.distance=620;
+app.sceneRenderer=new Renderer3D(svgScene,app.sceneCam);
+app.sceneRenderer.showAxes=false;
+
+function renderAll(){
+  app.homeRenderer.render(app.puppet,{showHandles:false,showCOM:false,showGrid:false,showBackground:false});
+  app.studioRenderer.render(app.puppet,{
+    showHandles:(app.studioTab==="pose"&&app.poseMode==="articulations"),
+    showCOM:false,
+    showGrid:true,
+    showBackground:false,
+    bgFill:"#efe6d3"
+  });
+  if(app.studioTab==="lumiere"){
+    drawShadowOnStudio();
+  }
+  app.sceneRenderer.render(app.puppet,{
+    showHandles:false,
+    showCOM:false,
+    showGrid:true,
+    bgFill:["#efe6d3","#2c2c30","#a5c4ad","#fbf7ef"][sceneBgIndex||0]
+  });
+}
+let renderQueued=false;
+function requestRender(){
+  if(renderQueued)return;
+  renderQueued=true;
+  requestAnimationFrame(()=>{
+    renderQueued=false;
+    renderAll();
+  });
+}
+
+/* ============================================================
+   DRAG STUDIO
+============================================================ */
+
+function viewCoords(svg,cx,cy){
+  const pt=svg.createSVGPoint();
+  pt.x=cx;pt.y=cy;
+  const ctm=svg.getScreenCTM();
+  if(!ctm)return{x:cx,y:cy};
+  const p=pt.matrixTransform(ctm.inverse());
+  return{x:p.x,y:p.y};
+}
+
+function onStudioDown(e){
+  e.preventDefault();
+  if(app.studioTab!=="pose"||app.poseMode!=="articulations"){
+    /* on autorise l'orbit en mode lumieres, mais pas dessiner */
+    if(app.studioTab==="lumiere"){
+      app.orbitPointerId=e.pointerId;
+      app.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      svgStudio.setPointerCapture(e.pointerId);
+    }
+    return;
+  }
+
+  svgStudio.setPointerCapture(e.pointerId);
+  app.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+  if(app.pointers.size===1){
+    const v=viewCoords(svgStudio,e.clientX,e.clientY);
+    const hit=app.studioRenderer.hitFromSvg(app.puppet,v.x,v.y);
+    if(hit){
+      app.puppet.selected=hit;
+      app.dragKey=hit;
+      app.dragPointerId=e.pointerId;
+      app.orbitPointerId=null;
+      const m=HANDLE_MAP[hit];
+      const ref=app.puppet.J[m.J]||(m.T?app.puppet.T[m.T]:null);
+      app.dragRefWorld=ref?ref.clone():null;
+      app.dragRefScreen=v;
+      app.studioRenderer._dragStartT={};
+      requestRender();
+    }else{
+      app.dragKey=null;
+      app.dragPointerId=null;
+      app.orbitPointerId=e.pointerId;
+    }
+  }
+}
+
+function onStudioMove(e){
+  if(app.studioTab==="lumiere"){
+    if(app.orbitPointerId===e.pointerId){
+      const prev=app.pointers.get(e.pointerId);
+      if(!prev)return;
+      const dx=e.clientX-prev.x,dy=e.clientY-prev.y;
+      app.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      app.studioCam.yaw+=dx*.007;
+      app.studioCam.pitch=clamp(app.studioCam.pitch+dy*.007,-1.2,1.2);
+      requestRender();
+    }
+    return;
+  }
+  if(app.studioTab!=="pose"||app.poseMode!=="articulations")return;
+  if(!app.pointers.has(e.pointerId))return;
+
+  const prev=app.pointers.get(e.pointerId);
+  const dx=e.clientX-prev.x,dy=e.clientY-prev.y;
+  app.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+  if(app.pointers.size>=2){
+    const pts=[...app.pointers.values()];
+    const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+    const cx=(pts[0].x+pts[1].x)/2,cy=(pts[0].y+pts[1].y)/2;
+    if(app.lastPinchDist!==null){
+      app.studioCam.distance=clamp(app.studioCam.distance-(dist-app.lastPinchDist)*.9,300,1400);
+    }
+    if(app.lastPinchCenter){
+      app.studioCam.panX+=(cx-app.lastPinchCenter.x)*.5;
+      app.studioCam.panY+=(cy-app.lastPinchCenter.y)*.5;
+    }
+    app.lastPinchDist=dist;
+    app.lastPinchCenter={x:cx,y:cy};
+    requestRender();
+    return;
+  }
+
+  if(app.dragKey&&e.pointerId===app.dragPointerId){
+    const v=viewCoords(svgStudio,e.clientX,e.clientY);
+    app.studioRenderer.moveTarget(app.puppet,app.dragKey,v.x,v.y,app.dragRefWorld,app.dragRefScreen);
+    app.puppet.solve();
+    syncFromPuppet();
+    if(app.activeKF>=0)updateActiveKeyframe();
+    requestRender();
+    return;
+  }
+
+  if(app.orbitPointerId===e.pointerId){
+    app.studioCam.yaw+=dx*.007;
+    app.studioCam.pitch=clamp(app.studioCam.pitch+dy*.007,-1.2,1.2);
+    requestRender();
+  }
+}
+
+function onStudioUp(e){
+  app.pointers.delete(e.pointerId);
+  if(e.pointerId===app.dragPointerId){
+    app.dragKey=null;
+    app.dragPointerId=null;
+    app.dragRefWorld=null;
+    app.dragRefScreen=null;
+    app.studioRenderer._dragStartT={};
+  }
+  if(e.pointerId===app.orbitPointerId)app.orbitPointerId=null;
+  if(app.pointers.size<2){
+    app.lastPinchDist=null;
+    app.lastPinchCenter=null;
+  }
+}
+
+svgStudio.addEventListener("pointerdown",onStudioDown,{passive:false});
+svgStudio.addEventListener("pointermove",onStudioMove,{passive:false});
+svgStudio.addEventListener("pointerup",onStudioUp);
+svgStudio.addEventListener("pointercancel",onStudioUp);
+
+/* ============================================================
+   SCÈNE (drag différent : déplacement figure + caméra)
+============================================================ */
+
+let sceneBgIndex=0;
+const BG_FILL=["#efe6d3","#2c2c30","#a5c4ad","#fbf7ef"];
+
+let sceneGesture=null;
+
+function onSceneDown(e){
+  e.preventDefault();
+  if(app.studioTab!=="scene")return;
+
+  const v=viewCoords(svgScene,e.clientX,e.clientY);
+
+  if(!sceneGesture){
+    sceneGesture={
+      pointers:new Map(),
+      startPoint:v,
+      startClient:{x:e.clientX,y:e.clientY},
+      figureStart:{...app.sceneFigState},
+      camStart:{...app.sceneCam},
+      mode:null
+    };
+  }
+  sceneGesture.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+  if(sceneGesture.pointers.size===1){
+    const hit=app.studioRenderer.hitFromSvg(app.puppet,v.x,v.y);
+    if(hit){
+      sceneGesture.mode="pose";
+      sceneGesture.handle=hit;
+      app.puppet.selected=hit;
+      app.dragKey=hit;
+      app.dragPointerId=e.pointerId;
+      const m=HANDLE_MAP[hit];
+      const ref=app.puppet.J[m.J]||(m.T?app.puppet.T[m.T]:null);
+      app.dragRefWorld=ref?ref.clone():null;
+      app.dragRefScreen=v;
+      app.studioRenderer._dragStartT={};
+    }else{
+      sceneGesture.mode="move";
+    }
+  }else if(sceneGesture.pointers.size===2){
+    sceneGesture.mode="camera";
+    const values=[...sceneGesture.pointers.values()];
+    const a=values[0],b=values[1];
+    sceneGesture.pinch={
+      distance:Math.hypot(a.x-b.x,a.y-b.y),
+      angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI,
+      camStart:{...app.sceneCam}
+    };
+  }
+
+  svgScene.setPointerCapture(e.pointerId);
+}
+
+function onSceneMove(e){
+  if(!sceneGesture)return;
+  const ptr=sceneGesture.pointers.get(e.pointerId);
+  if(!ptr)return;
+  ptr.x=e.clientX;ptr.y=e.clientY;
+  const pointers=[...sceneGesture.pointers.values()];
+
+  if(pointers.length>=2&&sceneGesture.mode==="camera"){
+    const a=pointers[0],b=pointers[1];
+    const distance=Math.hypot(a.x-b.x,a.y-b.y);
+    const angle=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
+    const pinch=sceneGesture.pinch;
+    const ratio=distance/Math.max(pinch.distance,1);
+    app.sceneCam.distance=clamp(pinch.camStart.distance/ratio,300,1400);
+    app.sceneCam.yaw=pinch.camStart.yaw+(angle-pinch.angle)*Math.PI/180;
+    requestRender();
+    return;
+  }
+
+  if(pointers.length!==1)return;
+
+  if(sceneGesture.mode==="pose"){
+    const v=viewCoords(svgScene,e.clientX,e.clientY);
+    app.studioRenderer.moveTarget(app.puppet,sceneGesture.handle,v.x,v.y,app.dragRefWorld,app.dragRefScreen);
+    app.puppet.solve();
+    syncFromPuppet();
+    if(app.activeKF>=0)updateActiveKeyframe();
+    requestRender();
+  }else if(sceneGesture.mode==="move"){
+    /* on ajuste la distance caméra pour simuler "déplacer la figure" */
+    const dx=e.clientX-sceneGesture.startClient.x;
+    const dy=e.clientY-sceneGesture.startClient.y;
+    app.sceneCam.panX=dx*1.2;
+    app.sceneCam.panY=dy*1.2;
+    requestRender();
+  }
+}
+
+function onSceneUp(e){
+  if(!sceneGesture)return;
+  sceneGesture.pointers.delete(e.pointerId);
+  if(sceneGesture.pointers.size===0){
+    if(e.pointerId===app.dragPointerId){
+      app.dragKey=null;
+      app.dragPointerId=null;
+      app.dragRefWorld=null;
+      app.dragRefScreen=null;
+    }
+    sceneGesture=null;
+  }
+}
+
+svgScene.addEventListener("pointerdown",onSceneDown,{passive:false});
+svgScene.addEventListener("pointermove",onSceneMove,{passive:false});
+svgScene.addEventListener("pointerup",onSceneUp);
+svgScene.addEventListener("pointercancel",onSceneUp);
+
+/* ============================================================
+   APLICATION DE LA POSE NEUTRE + sync sliders simulés
+============================================================ */
+
+/* on n'a plus les 15 sliders d'origine, mais on peut afficher
+   quelques infos dans le panneau pose */
+function syncFromPuppet(){
+  /* rien à synchroniser ici, on garde l'API pour la cohérence */
+}
+
+/* ============================================================
+   BIBLIOTHÈQUE
+============================================================ */
+
+function allLib(){return[...POSES_3D,...app.customLib];}
+
+function renderLib(){
+  const scroll=$("lib-scroll");
+  scroll.innerHTML="";
+
+  allLib().forEach(entry=>{
+    const custom=String(entry.id).startsWith("c");
+    const card=document.createElement("div");
+    card.className="lib-card"+(custom?" custom":"")+(app.activeLibId===entry.id?" active":"");
+
+    const svg=document.createElementNS(NS,"svg");
+    svg.setAttribute("viewBox","0 0 400 460");
+    card.appendChild(svg);
+
+    /* on rend la miniature avec un puppet jetable */
+    const tempPuppet=new Puppet();
+    const poseData=entry.build?entry.build():entry.pose;
+    applyPoseToPuppet(tempPuppet,poseData);
+    const tempCam=new Camera();
+    tempCam.W=400;tempCam.H=460;tempCam.distance=620;
+    const tempRenderer=new Renderer3D(svg,tempCam);
+    tempRenderer.showHandles=false;
+    tempRenderer.showCOM=false;
+    tempRenderer.render(tempPuppet,{showGrid:false,showBackground:false});
+
+    const name=document.createElement("div");
+    name.className="lib-name";
+    name.textContent=entry.name;
+    card.appendChild(name);
+
+    if(custom){
+      const del=document.createElement("div");
+      del.className="lib-del";
+      del.textContent="×";
+      del.onclick=ev=>{
+        ev.stopPropagation();
+        app.customLib=app.customLib.filter(p=>p.id!==entry.id);
+        store("artpose3d-custom-lib",app.customLib);
+        if(app.activeLibId===entry.id)app.activeLibId=null;
+        renderLib();
+        toast("Pose retirée");
+      };
+      card.appendChild(del);
+    }
+
+    card.onclick=()=>{
+      saveUndo();
+      const data=entry.build?entry.build():entry.pose;
+      applyPoseToPuppet(app.puppet,data);
+      app.activeLibId=entry.id;
+      app.activeKF=-1;
+      requestRender();
+      renderLib();
+      toast(entry.name+" appliquée");
+    };
+
+    scroll.appendChild(card);
+  });
+}
+
+/* ============================================================
+   UNDO / REDO
+============================================================ */
+
+function poseSnapshot(){
+  return serializePose(extractPoseFromPuppet(app.puppet));
+}
+
+function saveUndo(){
+  app.undoStack.push(poseSnapshot());
+  if(app.undoStack.length>30)app.undoStack.shift();
+  app.redoStack.length=0;
+}
+
+function undo(){
+  if(app.studioTab==="pose"&&app.poseMode==="dessiner"){
+    if(!app.drawUndoStack.length){toast("Rien à annuler");return;}
+    restoreDrawingSnapshot(app.drawUndoStack.pop());
+    toast("Annulé");
+    return;
+  }
+  if(!app.undoStack.length)return;
+  app.redoStack.push(poseSnapshot());
+  const prev=deserializePose(app.undoStack.pop());
+  applyPoseToPuppet(app.puppet,prev);
+  app.activeKF=-1;
+  requestRender();
+  toast("Annulé");
+}
+
+function redo(){
+  if(app.studioTab==="pose"&&app.poseMode==="dessiner"){
+    toast("Rétablissement indisponible pour le dessin");
+    return;
+  }
+  if(!app.redoStack.length)return;
+  app.undoStack.push(poseSnapshot());
+  const next=deserializePose(app.redoStack.pop());
+  applyPoseToPuppet(app.puppet,next);
+  app.activeKF=-1;
+  requestRender();
+  toast("Rétabli");
+}
+
+/* ============================================================
+   MODE DESSIN
+============================================================ */
+
+function ensureCanvas(){
+  if(app.drawCanvas)return;
+  const wrap=$("studio-figure-wrap");
+  const c=document.createElement("canvas");
+  c.className="draw-layer";
+  wrap.appendChild(c);
+  app.drawCanvas=c;
+  app.drawCtx=c.getContext("2d");
+  app.drawCtx.strokeStyle="#2b2a25";
+  app.drawCtx.lineWidth=2.5;
+  app.drawCtx.lineCap="round";
+  app.drawCtx.lineJoin="round";
+
+  function resize(){
+    const rect=wrap.getBoundingClientRect();
+    const ratio=Math.min(window.devicePixelRatio||1,2);
+    const w=Math.max(1,Math.round(rect.width*ratio));
+    const h=Math.max(1,Math.round(rect.height*ratio));
+    if(c.width===w&&c.height===h)return;
+    const old=(c.width&&c.height)?c.toDataURL():null;
+    c.width=w;c.height=h;
+    c.style.width=rect.width+"px";
+    c.style.height=rect.height+"px";
+    app.drawCtx.setTransform(ratio,0,0,ratio,0,0);
+    if(old){
+      const img=new Image();
+      img.onload=()=>{app.drawCtx.drawImage(img,0,0,rect.width,rect.height);};
+      img.src=old;
+    }
+  }
+  resize();
+  new ResizeObserver(resize).observe(wrap);
+
+  function position(ev){
+    const rect=c.getBoundingClientRect();
+    return{x:ev.clientX-rect.left,y:ev.clientY-rect.top};
+  }
+
+  c.addEventListener("pointerdown",ev=>{
+    if(app.studioTab!=="pose"||app.poseMode!=="dessiner")return;
+    try{
+      app.drawUndoStack.push(c.toDataURL());
+      if(app.drawUndoStack.length>20)app.drawUndoStack.shift();
+    }catch(e){}
+    app.isDrawing=true;
+    app.hasDrawing=true;
+    c.setPointerCapture(ev.pointerId);
+    const p=position(ev);
+    app.drawCtx.beginPath();
+    app.drawCtx.moveTo(p.x,p.y);
+    ev.preventDefault();
+  },{passive:false});
+
+  c.addEventListener("pointermove",ev=>{
+    if(!app.isDrawing)return;
+    const p=position(ev);
+    app.drawCtx.lineTo(p.x,p.y);
+    app.drawCtx.stroke();
+    ev.preventDefault();
+  },{passive:false});
+
+  const stop=()=>{app.isDrawing=false;};
+  c.addEventListener("pointerup",stop);
+  c.addEventListener("pointercancel",stop);
+}
+
+function restoreDrawingSnapshot(dataUrl){
+  if(!app.drawCanvas||!app.drawCtx)return;
+  const rect=app.drawCanvas.getBoundingClientRect();
+  app.drawCtx.clearRect(0,0,app.drawCanvas.width,app.drawCanvas.height);
+  if(!dataUrl){app.hasDrawing=false;return;}
+  const img=new Image();
+  img.onload=()=>{
+    app.drawCtx.clearRect(0,0,app.drawCanvas.width,app.drawCanvas.height);
+    app.drawCtx.drawImage(img,0,0,rect.width,rect.height);
+  };
+  img.src=dataUrl;
+  app.hasDrawing=true;
+}
+
+/* ============================================================
+   OMBRE (panneau lumière)
+============================================================ */
+
+let shadowLayer=null;
+function drawShadowOnStudio(){
+  /* on ajoute une silhouette décalée sous le SVG studio */
+  const svg=svgStudio;
+  const existing=svg.querySelector("#shadow-layer");
+  if(existing)existing.remove();
+
+  const shadow=document.createElementNS(NS,"g");
+  shadow.setAttribute("id","shadow-layer");
+  shadow.setAttribute("opacity","0.18");
+
+  /* on projette les points du puppet sur le sol */
+  const puppet=app.puppet;
+  const J=puppet.J;
+  const gy=puppet.groundY;
+  const shift=Number($("light-angle").value)*1.1;
+  const sq=.22;
+
+  const s={};
+  for(const k in J){
+    if(!J[k])continue;
+    const p=J[k];
+    const h=gy-p.y;
+    s[k]=new Vec3(p.x+shift*(h/180),gy-h*sq,p.z);
+  }
+
+  const cam=app.studioCam;
+  function line(a,b){
+    const A=cam.project(a),B=cam.project(b);
+    shadow.appendChild(makeSVGLine(A,B));
+  }
+  function makeSVGLine(A,B){
+    const l=document.createElementNS(NS,"line");
+    l.setAttribute("x1",A.x);l.setAttribute("y1",A.y);
+    l.setAttribute("x2",B.x);l.setAttribute("y2",B.y);
+    l.setAttribute("stroke","#2b2a25");
+    l.setAttribute("stroke-width","2.4");
+    l.setAttribute("stroke-linecap","round");
+    return l;
+  }
+
+  const pairs=[
+    ["hipR","kneeR"],["kneeR","ankleR"],["ankleR","toesR"],
+    ["hipL","kneeL"],["kneeL","ankleL"],["ankleL","toesL"],
+    ["pelvis","spineMid"],["spineMid","chest"],["chest","neck"],["neck","head"],
+    ["shoulderL","shoulderR"],["hipL","hipR"],
+    ["shoulderR","elbowR"],["elbowR","wristR"],["wristR","handR"],
+    ["shoulderL","elbowL"],["elbowL","wristL"],["wristL","handL"]
+  ];
+  for(const[a,b] of pairs){
+    if(s[a]&&s[b])line(s[a],s[b]);
+  }
+
+  svg.insertBefore(shadow,svg.firstChild);
+}
+
+/* ============================================================
+   KEYFRAMES
+============================================================ */
+
+function updateActiveKeyframe(){
+  if(app.activeKF>=0&&app.activeKF<app.keyframes.length){
+    app.keyframes[app.activeKF]=poseSnapshot();
+    persistMotion();
+  }
+}
+
+function persistMotion(){
+  store("artpose3d-motion",{keyframes:app.keyframes,speed:app.playingSpeed});
+}
+
+function renderKFs(){
+  const row=$("kf-row");
+  $$(".kf-thumb",row).forEach(e=>e.remove());
+  const add=$("kf-add");
+
+  app.keyframes.forEach((kf,index)=>{
+    const thumb=document.createElement("div");
+    thumb.className="kf-thumb"+(index===app.activeKF?" active":"");
+
+    const svg=document.createElementNS(NS,"svg");
+    svg.setAttribute("viewBox","0 0 400 460");
+    thumb.appendChild(svg);
+
+    const tp=new Puppet();
+    applyPoseToPuppet(tp,deserializePose(kf));
+    const tc=new Camera();tc.W=400;tc.H=460;tc.distance=620;
+    const tr=new Renderer3D(svg,tc);
+    tr.showHandles=false;tr.showCOM=false;
+    tr.render(tp,{showGrid:false,showBackground:false});
+
+    const del=document.createElement("div");
+    del.className="del";
+    del.textContent="×";
+    del.onclick=ev=>{
+      ev.stopPropagation();
+      app.keyframes.splice(index,1);
+      if(app.activeKF===index)app.activeKF=-1;
+      else if(app.activeKF>index)app.activeKF--;
+      persistMotion();
+      renderKFs();
+    };
+    thumb.appendChild(del);
+
+    thumb.onclick=()=>{
+      app.activeKF=index;
+      const data=deserializePose(app.keyframes[index]);
+      applyPoseToPuppet(app.puppet,data);
+      $("timeline").value=app.keyframes.length>1?Math.round(index/(app.keyframes.length-1)*100):0;
+      renderKFs();
+      requestRender();
+    };
+
+    row.insertBefore(thumb,add);
+  });
+}
+
+/* ============================================================
+   MARCHE / COURSE (procédurales sur le puppet)
+============================================================ */
+
+const CYCLES={
+  walk:{duration:1.4,armSwing:25,legSwing:30,torsoLean:4},
+  run:{duration:.9,armSwing:55,legSwing:45,torsoLean:14}
+};
+
+function walkPoseAt(t,mode){
+  /* On part de la pose neutre et on module les cibles */
+  const base=poseNeutre();
+  const cfg=CYCLES[mode];
+  const phase=t*Math.PI*2;
+  const ls=Math.sin(phase)*cfg.legSwing;
+
+  base.T.ankleL=new Vec3(
+    -32,
+    205-Math.max(0,Math.sin(phase))*40,
+    -ls
+  );
+  base.T.ankleR=new Vec3(
+    32,
+    205-Math.max(0,-Math.sin(phase))*40,
+    ls
+  );
+  base.T.kneeL=new Vec3(-34,125-Math.max(0,Math.sin(phase))*20,-ls*.6);
+  base.T.kneeR=new Vec3(34,125-Math.max(0,-Math.sin(phase))*20,ls*.6);
+
+  const as=Math.sin(phase)*cfg.armSwing;
+  base.T.handL=new Vec3(-115-as, -55, -as*.4);
+  base.T.handR=new Vec3(115-as, -55, as*.4);
+  base.T.elbowL=new Vec3(-76-as*.4,-55,-35+as*.2);
+  base.T.elbowR=new Vec3(76-as*.4,-55,-35-as*.2);
+
+  base.T.torso=new Vec3(0,-70+cfg.torsoLean,0);
+  base.T.pelvis=new Vec3(0,35,0);
+  base.grounded.L=false;base.grounded.R=false;
+  return base;
+}
+
+function poseAt(t){
+  if(app.keyframes.length>=2){
+    const n=app.keyframes.length;
+    const position=t*(n-1);
+    const index=Math.min(Math.floor(position),n-2);
+    const local=position-index;
+    const a=deserializePose(app.keyframes[index]);
+    const b=deserializePose(app.keyframes[index+1]);
+    /* interpolation simple sur les positions T */
+    const out=poseNeutre();
+    for(const k in a.T){
+      const av=a.T[k],bv=b.T[k];
+      if(av&&av.x!==undefined){
+        out.T[k]=new Vec3(
+          av.x+(bv.x-av.x)*local,
+          av.y+(bv.y-av.y)*local,
+          av.z+(bv.z-av.z)*local
+        );
+      }else{
+        out.T[k]=av+((bv||0)-(av||0))*local;
+      }
+    }
+    return out;
+  }
+  return walkPoseAt(t,app.walkMode);
+}
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+
+const SCREENS=["accueil","studio","galerie"];
+
+function showScreen(name,tab){
+  if(app.currentScreen==="studio"&&name!=="studio"&&app.playing){
+    app.playing=false;
+    cancelAnimationFrame(app.animationFrame);
+    $("btn-play").textContent="▶";
+  }
+  app.currentScreen=name;
+  SCREENS.forEach(s=>{$("screen-"+s).hidden=s!==name;});
+  $$(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.nav.split(":")[0]===name));
+
+  if(name==="studio")setStudioTab(tab||app.studioTab);
+  if(name==="galerie")renderGallery();
+  if(name==="accueil")requestRender();
+}
+
+document.addEventListener("click",ev=>{
+  const nav=ev.target.closest(".nav-btn");
+  const go=ev.target.closest("[data-goto]");
+  if(nav){
+    const [s,t]=nav.dataset.nav.split(":");
+    showScreen(s,t);
+    return;
+  }
+  if(go){
+    const [s,t]=go.dataset.goto.split(":");
+    showScreen(s,t);
+  }
+});
+
+const TITLES={pose:"Pose",lumiere:"Lumière",scene:"Scène"};
+
+function setStudioTab(tab){
+  app.studioTab=tab;
+  $$(".tabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===tab));
+  $("studio-title").textContent=TITLES[tab];
+  $("panel-pose").hidden=tab!=="pose";
+  $("panel-lumiere").hidden=tab!=="lumiere";
+  $("panel-scene").hidden=tab!=="scene";
+  $("studio-figure-wrap").hidden=tab==="scene";
+  $("scene").hidden=tab!=="scene";
+
+  /* en mode lumière, on autorise l'orbit studio */
+  if(tab==="lumiere"){
+    app.poseMode="articulations";
+  }
+  if(tab==="scene"){
+    renderKFs();
+  }
+  if(tab==="pose"){
+    renderLib();
+    if(app.poseMode==="dessiner"){
+      app.poseMode="articulations";
+      setPoseMode("articulations");
+    }
+  }
+  requestRender();
+}
+
+$$(".tabs .tab").forEach(tab=>{
+  tab.addEventListener("click",()=>{setStudioTab(tab.dataset.tab);});
+});
+
+/* ============================================================
+   PANNEAU POSE
+============================================================ */
+
+function setPoseMode(mode){
+  app.poseMode=mode;
+  $$("[data-posemode]").forEach(b=>b.classList.toggle("active",b.dataset.posemode===mode));
+  $("pose-hint").textContent=
+    mode==="dessiner"
+      ?"Dessinez librement par-dessus la silhouette."
+      :"Tirez une main, un pied ou le buste. Le coude, le genou ou le dos suivent naturellement.";
+  $("btn-clear-drawing").hidden=mode!=="dessiner";
+  if(mode==="dessiner"){
+    ensureCanvas();
+    /* rotation caméra verrouillée en mode dessiner */
+    app.orbitPointerId=null;
+  }
+  requestRender();
+}
+
+$$("[data-posemode]").forEach(b=>{
+  b.addEventListener("click",()=>setPoseMode(b.dataset.posemode));
+});
+
+$("btn-undo").onclick=undo;
+$("btn-redo").onclick=redo;
+
+$("btn-reset-pose").onclick=()=>{
+  saveUndo();
+  applyPoseToPuppet(app.puppet,poseNeutre());
+  app.activeLibId=null;
+  app.activeKF=-1;
+  requestRender();
+  renderLib();
+  toast("Posture réinitialisée");
+};
+
+$("btn-clear-drawing").onclick=()=>{
+  if(!app.drawCanvas)return;
+  try{
+    app.drawUndoStack.push(app.drawCanvas.toDataURL());
+    if(app.drawUndoStack.length>20)app.drawUndoStack.shift();
+  }catch(e){}
+  app.drawCtx.clearRect(0,0,app.drawCanvas.width,app.drawCanvas.height);
+  app.hasDrawing=false;
+  toast("Dessin effacé");
+};
+
+$("btn-lib-add").onclick=()=>{
+  const name=prompt("Nom de la pose :","Ma pose");
+  if(!name?.trim())return;
+  const entry={id:"c"+Date.now(),name:name.trim().slice(0,18),pose:poseSnapshot()};
+  app.customLib.unshift(entry);
+  store("artpose3d-custom-lib",app.customLib);
+  app.activeLibId=entry.id;
+  renderLib();
+  toast("Pose ajoutée");
+};
+
+$("btn-save-pose").onclick=()=>{
+  let drawing=null;
+  if(app.drawCanvas&&app.poseMode==="dessiner"&&app.hasDrawing){
+    try{drawing=app.drawCanvas.toDataURL("image/png");}catch(e){}
+  }
+  app.gallery.unshift({
+    id:Date.now(),type:"pose",
+    pose:poseSnapshot(),
+    ...(drawing?{drawing}:{})
+  });
+  persistGallery();
+  toast(drawing?"Pose et dessin enregistrés":"Pose enregistrée");
+};
+
+/* ============================================================
+   PANNEAU LUMIÈRE
+============================================================ */
+
+$("light-angle").value=app.lightAngle;
+$("light-angle").oninput=()=>{
+  app.lightAngle=Number($("light-angle").value);
+  store("artpose3d-light-angle",app.lightAngle);
+  drawShadowOnStudio();
+};
+
+$("btn-save-ombre").onclick=()=>{
+  app.gallery.unshift({
+    id:Date.now(),type:"ombre",
+    pose:poseSnapshot(),
+    lightAngle:app.lightAngle
+  });
+  persistGallery();
+  toast("Étude d'ombre enregistrée");
+};
+
+/* ============================================================
+   PANNEAU SCÈNE
+============================================================ */
+
+const BG_SW=[
+  "linear-gradient(180deg,#efe6d3,#d9cba4)",
+  "linear-gradient(180deg,#2c2c30,#16161a)",
+  "linear-gradient(180deg,#bcd8e0,#7fae86 75%,#6f9166)",
+  "repeating-linear-gradient(0deg,#fbf7ef,#fbf7ef 22px,#dcd3bd 23px)"
+];
+
+$("bg-swatches").innerHTML=BG_SW.map((bg,i)=>
+  `<div class="bg-swatch${i===sceneBgIndex?" active":""}" data-bg="${i}" style="background:${bg}"></div>`
+).join("");
+
+$("bg-swatches").addEventListener("click",ev=>{
+  const sw=ev.target.closest(".bg-swatch");
+  if(!sw)return;
+  sceneBgIndex=Number(sw.dataset.bg);
+  $$(".bg-swatch").forEach(x=>x.classList.toggle("active",x===sw));
+  requestRender();
+});
+
+$("scene-scale").oninput=ev=>{
+  const s=Number(ev.target.value)/100;
+  app.sceneCam.focal=570*s;
+  requestRender();
+};
+
+$("speed-row").innerHTML=[.5,1,2].map(v=>
+  `<button class="speed-btn${v===app.playingSpeed?" active":""}" data-speed="${v}">${v}x</button>`
+).join("");
+
+$("speed-row").addEventListener("click",ev=>{
+  const b=ev.target.closest(".speed-btn");
+  if(!b)return;
+  app.playingSpeed=Number(b.dataset.speed);
+  $$("#speed-row .speed-btn").forEach(x=>x.classList.toggle("active",x===b));
+  persistMotion();
+});
+
+$("cycle-row").addEventListener("click",ev=>{
+  const b=ev.target.closest("[data-cycle]");
+  if(!b)return;
+  app.walkMode=b.dataset.cycle;
+  $$("#cycle-row .speed-btn").forEach(x=>x.classList.toggle("active",x===b));
+  toast(app.walkMode==="walk"?"Cycle de marche":"Cycle de course");
+});
+
+$("btn-play").onclick=()=>{
+  app.playing=!app.playing;
+  $("btn-play").textContent=app.playing?"❚❚":"▶";
+  if(!app.playing){cancelAnimationFrame(app.animationFrame);return;}
+
+  app.playStart=performance.now();
+  function loop(now){
+    if(!app.playing)return;
+    const duration=app.keyframes.length>=2
+      ?2600/app.playingSpeed
+      :CYCLES[app.walkMode].duration*1000/app.playingSpeed;
+    const t=((now-app.playStart)%duration)/duration;
+    $("timeline").value=Math.round(t*100);
+    applyPoseToPuppet(app.puppet,poseAt(t));
+    requestRender();
+    app.animationFrame=requestAnimationFrame(loop);
+  }
+  app.animationFrame=requestAnimationFrame(loop);
+};
+
+$("timeline").addEventListener("input",ev=>{
+  app.playing=false;
+  cancelAnimationFrame(app.animationFrame);
+  $("btn-play").textContent="▶";
+  const t=Number(ev.target.value)/100;
+  applyPoseToPuppet(app.puppet,poseAt(t));
+  app.activeKF=-1;
+  renderKFs();
+  requestRender();
+});
+
+$("kf-add").onclick=()=>{
+  if(app.keyframes.length>=4){toast("Maximum 4 images-clés");return;}
+  saveUndo();
+  app.keyframes.push(poseSnapshot());
+  app.activeKF=app.keyframes.length-1;
+  persistMotion();
+  renderKFs();
+  toast("Image-clé "+app.keyframes.length+" ajoutée");
+};
+
+$("btn-reset-scene").onclick=()=>{
+  saveUndo();
+  applyPoseToPuppet(app.puppet,poseNeutre());
+  app.activeLibId=null;
+  app.sceneCam.reset();
+  app.sceneCam.W=400;app.sceneCam.H=460;
+  app.sceneCam.distance=620;
+  $("scene-scale").value=100;
+  requestRender();
+  toast("Scène réinitialisée");
+};
+
+$("btn-save-scene").onclick=()=>{
+  const base={
+    bg:sceneBgIndex,
+    view:{
+      yaw:app.sceneCam.yaw,
+      pitch:app.sceneCam.pitch,
+      distance:app.sceneCam.distance
+    }
+  };
+
+  if(app.keyframes.length>=2){
+    app.gallery.unshift({
+      id:Date.now(),type:"scene-animation",
+      keyframes:app.keyframes.map(k=>({...k})),
+      speed:app.playingSpeed,
+      ...base
+    });
+    toast("Animation enregistrée");
+  }else{
+    app.gallery.unshift({
+      id:Date.now(),type:"scene",
+      pose:poseSnapshot(),
+      ...base
+    });
+    toast("Scène enregistrée");
+  }
+  persistGallery();
+};
+
+/* ============================================================
+   GALERIE
+============================================================ */
+
+const BADGE={ombre:"☀ Ombre",scene:"▣ Scène","scene-animation":"▶ Scène animée",pose:"◑ Pose"};
+
+function persistGallery(){store("artpose3d-gallery",app.gallery);}
+
+function renderGallery(){
+  const holder=$("gallery-content");
+  if(!app.gallery.length){
+    holder.innerHTML=`
+      <div class="gallery-empty">
+        Votre galerie est vide.
+        <br>
+        Enregistrez vos premières poses.
+      </div>`;
+    return;
+  }
+
+  holder.innerHTML=`<div class="gallery-grid"></div>`;
+  const grid=holder.firstElementChild;
+
+  app.gallery.forEach((item,index)=>{
+    const cell=document.createElement("div");
+    cell.className="gallery-item";
+
+    if(item.type==="scene"||item.type==="scene-animation"){
+      cell.style.background=BG_SW[item.bg||0];
+    }
+
+    const svg=document.createElementNS(NS,"svg");
+    svg.setAttribute("viewBox","0 0 400 460");
+    cell.appendChild(svg);
+
+    /* puppet jetable pour le rendu */
+    const tp=new Puppet();
+    const poseData=item.type==="scene-animation"
+      ?deserializePose(item.keyframes[0])
+      :(item.pose?deserializePose(item.pose):poseNeutre());
+    applyPoseToPuppet(tp,poseData);
+
+    const tc=new Camera();
+    tc.W=400;tc.H=460;tc.distance=620;
+    if(item.view){
+      tc.yaw=item.view.yaw??Math.PI;
+      tc.pitch=item.view.pitch??-.08;
+      tc.distance=item.view.distance??620;
+    }
+    const tr=new Renderer3D(svg,tc);
+    tr.showHandles=false;
+    tr.showCOM=false;
+    tr.render(tp,{showGrid:false,showBackground:false});
+
+    if(item.type==="ombre"){
+      /* ombre simple : on dessine un décalage */
+      /* optionnel, on laisse vide pour l'instant */
+    }
+
+    if(item.drawing){
+      const img=document.createElement("img");
+      img.src=item.drawing;
+      img.style.cssText="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;";
+      cell.appendChild(img);
+    }
+
+    let label=BADGE[item.type]||"Pose";
+    if(item.type==="pose"&&item.drawing)label="✎ Dessin";
+
+    const badge=document.createElement("div");
+    badge.textContent=label;
+    badge.style.cssText="position:absolute;left:6px;bottom:6px;background:rgba(43,42,37,.68);color:white;font-size:10px;font-weight:600;padding:3px 7px;border-radius:8px;z-index:5;";
+    cell.appendChild(badge);
+
+    const del=document.createElement("div");
+    del.className="del";
+    del.textContent="×";
+    del.onclick=ev=>{
+      ev.stopPropagation();
+      app.gallery.splice(index,1);
+      persistGallery();
+      renderGallery();
+    };
+    cell.appendChild(del);
+
+    cell.onclick=()=>loadGalleryItem(item);
+    grid.appendChild(cell);
+  });
+}
+
+function loadGalleryItem(item){
+  if(item.type==="scene-animation"){
+    app.keyframes=item.keyframes.map(k=>({...k}));
+    app.playingSpeed=item.speed||1;
+    app.activeKF=app.keyframes.length?0:-1;
+    if(app.keyframes.length){
+      applyPoseToPuppet(app.puppet,deserializePose(app.keyframes[0]));
+    }
+    sceneBgIndex=item.bg||0;
+    if(item.view){
+      app.sceneCam.yaw=item.view.yaw??Math.PI;
+      app.sceneCam.pitch=item.view.pitch??-.08;
+      app.sceneCam.distance=item.view.distance??620;
+    }
+    persistMotion();
+    showScreen("studio","scene");
+    renderKFs();
+    requestRender();
+    toast("Animation chargée");
+    return;
+  }
+
+  if(item.type==="scene"){
+    applyPoseToPuppet(app.puppet,deserializePose(item.pose));
+    sceneBgIndex=item.bg||0;
+    if(item.view){
+      app.sceneCam.yaw=item.view.yaw??Math.PI;
+      app.sceneCam.pitch=item.view.pitch??-.08;
+      app.sceneCam.distance=item.view.distance??620;
+    }
+    showScreen("studio","scene");
+    requestRender();
+    toast("Scène chargée");
+    return;
+  }
+
+  if(item.type==="ombre"){
+    applyPoseToPuppet(app.puppet,deserializePose(item.pose));
+    $("light-angle").value=item.lightAngle||0;
+    app.lightAngle=item.lightAngle||0;
+    showScreen("studio","lumiere");
+    requestRender();
+    toast("Étude d'ombre chargée");
+    return;
+  }
+
+  applyPoseToPuppet(app.puppet,deserializePose(item.pose));
+  showScreen("studio","pose");
+
+  if(item.drawing){
+    setPoseMode("dessiner");
+    ensureCanvas();
+    const img=new Image();
+    img.onload=()=>{
+      const rect=app.drawCanvas.getBoundingClientRect();
+      app.drawCtx.clearRect(0,0,app.drawCanvas.width,app.drawCanvas.height);
+      app.drawCtx.drawImage(img,0,0,rect.width,rect.height);
+      app.hasDrawing=true;
+    };
+    img.src=item.drawing;
+  }else{
+    setPoseMode("articulations");
+  }
+
+  requestRender();
+  toast("Pose chargée");
+}
+
+/* ============================================================
+   AIDE + TOAST
+============================================================ */
+
+$("studio-help").onclick=()=>{
+  const messages={
+    pose:"Tirez une main, un pied ou le milieu du dos. Le coude, le genou ou la courbure du buste suivent automatiquement. 2 doigts : orbit.",
+    lumiere:"Faites glisser la figure pour tourner l'angle de vue et régler la lumière.",
+    scene:"Un doigt : saisir une articulation. Deux doigts : zoom et rotation de la caméra."
+  };
+  toast(messages[app.studioTab]);
+};
+
+function toast(message){
+  const el=$("toast");
+  el.textContent=message;
+  el.classList.add("show");
+  clearTimeout(app.toastTimer);
+  app.toastTimer=setTimeout(()=>{el.classList.remove("show");},2200);
+}
+
+/* ============================================================
+   ÉTAT INITIAL
+============================================================ */
+
+renderLib();
+renderKFs();
+$("timeline").value=0;
+setPoseMode("articulations");
+setStudioTab("pose");
+showScreen("accueil");
+requestRender();
+
+/* double tap pour reset caméra studio */
+let lastTap=0;
+svgStudio.addEventListener("pointerdown",e=>{
+  if(app.poseMode==="dessiner")return;
+  const now=performance.now();
+  if(now-lastTap<320){
+    app.studioCam.reset();
+    app.studioCam.W=400;app.studioCam.H=460;
+    app.studioCam.distance=620;
+    requestRender();
+  }
+  lastTap=now;
+});
+
+/* empêcher menu contextuel */
+document.addEventListener("contextmenu",e=>e.preventDefault());
+document.addEventListener("gesturestart",e=>e.preventDefault());
+
+})();
+</script>
+</body>
+</html>
