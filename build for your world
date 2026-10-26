@@ -1,0 +1,9 @@
+PoseGuard — a physical-plausibility check for AI-generated poses, built for artists.
+
+Text-to-pose models (Muse) generate skeletons that often look right but are physically impossible: floating feet, overextended joints, unbalanced stances. For an artist, that's a trap — you draw it, and it reads wrong without knowing why.
+
+I want to connect Meta's models to the constraint engine I already built: generate a pose from text, then validate it against range of motion, ground contact, and center-of-mass stability — and show the artist exactly which physical constraints the pose violates, as a correction signal.
+
+In 10 days: (1) wire Muse to generate pose targets from text, (2) adapt my solver to ingest external skeletons, (3) build the validation layer and a demo UI that highlights violations on the figure. The hard physics already exists — the hackathon adds the AI generation and the artist-facing validation.
+
+Theme: Build for Your World — a tool for artists, animators, and anatomy students who need poses that hold up physically, not just visually.
